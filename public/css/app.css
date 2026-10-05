@@ -3307,3 +3307,24 @@ input,select,textarea {
   .dialog-actions>.button { flex:1 1 100%; width:100%; }
   .demo-users { grid-template-columns:1fr; }
 }
+
+
+/* 2026 mobile polish: larger tap targets, single-column matchup cards and smoother feedback. */
+@media(max-width:620px) {
+  .button,.team-choice,.filter button,.bottom-nav a { min-height:48px; }
+  .games-grid,.games-grid.full { gap:14px; }
+  .game-card { border-radius:18px; overflow:hidden; }
+  .game-card-head { padding:12px 14px; }
+  .team-choice { padding:16px 12px 18px!important; }
+  .team-choice>strong { font-size:1.05rem!important; }
+  .team-mark,.team-logo { width:62px!important; height:64px!important; }
+  .content { padding-top:18px; }
+  .bottom-nav { padding-top:7px; }
+  .bottom-nav a { justify-content:center; border-radius:10px; }
+  dialog { width:calc(100% - 18px); }
+}
+@media(max-width:380px) {
+  .compact .team-choice,.full .team-choice { padding-left:7px!important; padding-right:7px!important; }
+  .team-mark,.team-logo { width:54px!important; height:56px!important; }
+  .team-choice>strong { font-size:.94rem!important; }
+}
