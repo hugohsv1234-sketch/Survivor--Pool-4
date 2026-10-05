@@ -104,3 +104,89 @@ def refresh(store, url, bearer=None):
         with store.transaction() as db:
             store.set(db, "provider_error", "NFL-Daten sind vorübergehend nicht erreichbar. Die zuletzt geladenen Daten bleiben sichtbar.")
         return False
+
+
+ESPN_SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard"
+ESPN_TEAM_MAP = {
+    "ARI":"ARI","ATL":"ATL","BAL":"BAL","BUF":"BUF","CAR":"CAR","CHI":"CHI","CIN":"CIN","CLE":"CLE",
+    "DAL":"DAL","DEN":"DEN","DET":"DET","GB":"GB","HOU":"HOU","IND":"IND","JAX":"JAX","KC":"KC",
+    "LV":"LV","LAC":"LAC","LAR":"LAR","MIA":"MIA","MIN":"MIN","NE":"NE","NO":"NO","NYG":"NYG",
+    "NYJ":"NYJ","PHI":"PHI","PIT":"PIT","SF":"SF","SEA":"SEA","TB":"TB","TEN":"TEN","WSH":"WAS","WAS":"WAS"
+}
+
+def _espn_json(url):
+    request = urllib.request.Request(url, headers={"Accept":"application/json","User-Agent":"SurvivorPool/2.0"})
+    with urllib.request.urlopen(request, timeout=10) as response:
+        raw = response.read(4_000_001)
+        if len(raw) > 4_000_000:
+            raise ValueError("ESPN-Antwort zu groß")
+        return json.loads(raw)
+
+def _espn_status(status):
+    name = str((status or {}).get("type", {}).get("name", "")).lower()
+    state = str((status or {}).get("type", {}).get("state", "")).lower()
+    if "postpon" in name: return "postponed"
+    if "cancel" in name: return "cancelled"
+    if state == "post" or "final" in name: return "final"
+    if state == "in": return "live"
+    return "scheduled"
+
+def _score(value):
+    if value in (None, ""): return None
+    return int(float(value))
+
+def espn_snapshot(season=None):
+    """Normalize ESPN's public NFL scoreboard into the pool's internal feed shape."""
+    season = int(season or datetime.now().year)
+    games = []
+    weeks_with_games = set()
+    # Regular season = weeks 1-18. Postseason maps to pool weeks 19-22.
+    requests = [(2, w, w) for w in range(1, 19)] + [(3, w, 18 + w) for w in range(1, 5)]
+    for season_type, espn_week, pool_week in requests:
+        url = f"{ESPN_SCOREBOARD}?dates={season}&seasontype={season_type}&week={espn_week}&limit=100"
+        payload = _espn_json(url)
+        for event in payload.get("events", []):
+            competitions = event.get("competitions") or []
+            if not competitions: continue
+            comp = competitions[0]
+            sides = {}
+            for c in comp.get("competitors", []):
+                team = c.get("team") or {}
+                abbr = ESPN_TEAM_MAP.get(str(team.get("abbreviation", "")).upper())
+                side = c.get("homeAway")
+                if abbr and side in ("home", "away"):
+                    sides[side] = (abbr, _score(c.get("score")))
+            if "home" not in sides or "away" not in sides: continue
+            status = _espn_status(comp.get("status") or event.get("status"))
+            kickoff = event.get("date") or comp.get("date")
+            if not kickoff: continue
+            games.append({
+                "id": "espn_" + str(event.get("id")),
+                "week": pool_week,
+                "away": sides["away"][0], "home": sides["home"][0],
+                "kickoff": kickoff, "status": status,
+                "away_score": sides["away"][1] if status in ("live","final") else None,
+                "home_score": sides["home"][1] if status in ("live","final") else None,
+                "started_at": kickoff if status in ("live","final") else None
+            })
+            weeks_with_games.add(pool_week)
+    if not games:
+        raise ValueError("ESPN lieferte keine NFL-Spiele")
+    now = time.time()
+    future = sorted({g["week"] for g in games if utc_timestamp(g["kickoff"]) > now and g["status"] == "scheduled"})
+    active = sorted({g["week"] for g in games if g["status"] == "live"})
+    current_week = active[0] if active else (future[0] if future else max(weeks_with_games))
+    return {"season": season, "current_week": current_week, "games": games}
+
+def refresh_espn(store, season=None):
+    """Refresh schedule/scores from ESPN. Previous good data survive any provider failure."""
+    try:
+        apply_snapshot(store, espn_snapshot(season))
+        with store.transaction() as db:
+            store.set(db, "source", "espn")
+        return True
+    except Exception as exc:
+        print(f"ESPN refresh failed: {exc}", flush=True)
+        with store.transaction() as db:
+            store.set(db, "provider_error", "NFL-Daten konnten gerade nicht aktualisiert werden. Die zuletzt geladenen Daten bleiben sichtbar.")
+        return False

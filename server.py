@@ -7,7 +7,7 @@ from pathlib import Path
 from socketserver import ThreadingMixIn
 from wsgiref.simple_server import WSGIServer, make_server
 from backend.app import App
-from backend.providers import refresh
+from backend.providers import refresh, refresh_espn
 
 ROOT = Path(__file__).resolve().parent
 
@@ -24,11 +24,21 @@ def create_app(port=8000, host="127.0.0.1"):
     app = App(os.environ.get("POOL_DB", str(ROOT / "data" / ("pool.sqlite3" if production else "demo.sqlite3"))),
               ROOT / "public", demo_mode=not production, pool_password=secret,
               pool_password_hash=secret_hash, origins=origins, secure=production)
-    if production and os.environ.get("NFL_FEED_URL"):
+    if production:
         def poll():
+            # A custom licensed feed still takes precedence; otherwise use the
+            # free ESPN scoreboard adapter. Refresh often enough for live scores.
             while True:
-                refresh(app.store, os.environ["NFL_FEED_URL"], os.environ.get("NFL_FEED_TOKEN"))
-                threading.Event().wait(60)
+                if os.environ.get("NFL_FEED_URL"):
+                    refresh(app.store, os.environ["NFL_FEED_URL"], os.environ.get("NFL_FEED_TOKEN"))
+                else:
+                    refresh_espn(app.store, os.environ.get("NFL_SEASON"))
+                threading.Event().wait(120)
+        # Load once before serving so a fresh production database has fixtures.
+        if os.environ.get("NFL_FEED_URL"):
+            refresh(app.store, os.environ["NFL_FEED_URL"], os.environ.get("NFL_FEED_TOKEN"))
+        else:
+            refresh_espn(app.store, os.environ.get("NFL_SEASON"))
         threading.Thread(target=poll, daemon=True).start()
     return app
 
