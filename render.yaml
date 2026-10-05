@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: survivor-pool
+    runtime: python
+    plan: free
+    rootDir: .
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --chdir /opt/render/project/src --pythonpath /opt/render/project/src server:application --bind 0.0.0.0:$PORT --workers 1 --threads 8
+    healthCheckPath: /
+    envVars:
+      - key: POOL_ENV
+        value: production
+      - key: POOL_PASSWORD
+        sync: false
+      - key: POOL_ORIGIN
+        sync: false
+      - key: POOL_DB
+        value: /opt/render/project/src/data/pool.sqlite3
