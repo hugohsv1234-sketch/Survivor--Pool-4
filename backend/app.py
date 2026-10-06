@@ -166,8 +166,10 @@ class App:
                         raise RuleError("Die Passwörter stimmen nicht überein.")
                     if db.execute("SELECT 1 FROM users WHERE username=?", (username,)).fetchone():
                         raise RuleError("Dieser Benutzername ist bereits vergeben.", 409)
-                    user_id = db.execute("INSERT INTO users(username,display_name,password_hash,role,joined_week,created_at) VALUES(?,?,?,'player',?,?)",
-                                         (username, display, hash_password(password), settings["current_week"], now)).lastrowid
+                    cursor = db.execute("INSERT INTO users(username,display_name,password_hash,role,joined_week,created_at) VALUES(?,?,?,'player',?,?)" +
+                                        (" RETURNING id" if self.store.postgres else ""),
+                                        (username, display, hash_password(password), settings["current_week"], now))
+                    user_id = cursor.fetchone()["id"] if self.store.postgres else cursor.lastrowid
                 else:
                     user = db.execute("SELECT * FROM users WHERE username=?", (username,)).fetchone()
                     valid = verify_password(password, user["password_hash"] if user else self.dummy_hash)

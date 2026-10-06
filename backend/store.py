@@ -1,5 +1,6 @@
 import json
 import sqlite3
+import os
 import time
 from contextlib import contextmanager
 from pathlib import Path
@@ -27,13 +28,63 @@ class ClosingConnection(sqlite3.Connection):
             self.close()
 
 
+class PostgresConnection:
+    """Small compatibility layer so the existing store can use SQLite locally and Postgres on Neon."""
+    def __init__(self, url):
+        import psycopg
+        from psycopg.rows import dict_row
+        self.raw = psycopg.connect(url, row_factory=dict_row)
+
+    @staticmethod
+    def _sql(sql):
+        return sql.replace("?", "%s")
+
+    def execute(self, sql, params=()):
+        return self.raw.execute(self._sql(sql), params)
+
+    def executescript(self, script):
+        for statement in script.split(";"):
+            if statement.strip():
+                self.raw.execute(statement)
+
+    def commit(self):
+        self.raw.commit()
+
+    def rollback(self):
+        self.raw.rollback()
+
+    def close(self):
+        self.raw.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        try:
+            if exc_type is None:
+                self.commit()
+            else:
+                self.rollback()
+        finally:
+            self.close()
+
+
 class Store:
     def __init__(self, path, demo_mode=True):
         self.path = str(path)
-        Path(path).parent.mkdir(parents=True, exist_ok=True)
+        self.database_url = os.environ.get("DATABASE_URL")
+        self.postgres = bool(self.database_url)
+        if not self.postgres:
+            Path(path).parent.mkdir(parents=True, exist_ok=True)
         with self.connect() as db:
-            db.executescript(SCHEMA)
-            db.execute("PRAGMA journal_mode=WAL")
+            schema = SCHEMA
+            if self.postgres:
+                schema = schema.replace("id INTEGER PRIMARY KEY,username", "id BIGSERIAL PRIMARY KEY,username")
+                schema = schema.replace("id INTEGER PRIMARY KEY,user_id", "id BIGSERIAL PRIMARY KEY,user_id")
+                schema = schema.replace(" UNIQUE COLLATE NOCASE", " UNIQUE")
+            db.executescript(schema)
+            if not self.postgres:
+                db.execute("PRAGMA journal_mode=WAL")
             if not db.execute("SELECT 1 FROM settings LIMIT 1").fetchone():
                 if demo_mode:
                     demo.seed(db, time.time(), hash_password("Survivor2026!"))
@@ -49,6 +100,8 @@ class Store:
             db.commit()
 
     def connect(self):
+        if self.postgres:
+            return PostgresConnection(self.database_url)
         db = sqlite3.connect(self.path, timeout=15, factory=ClosingConnection)
         db.row_factory = sqlite3.Row
         db.execute("PRAGMA foreign_keys=ON")
@@ -58,7 +111,7 @@ class Store:
     def transaction(self):
         db = self.connect()
         try:
-            db.execute("BEGIN IMMEDIATE")
+            db.execute("BEGIN" if self.postgres else "BEGIN IMMEDIATE")
             yield db
             db.commit()
         except Exception:
