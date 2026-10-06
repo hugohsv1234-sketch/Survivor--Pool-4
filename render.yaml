@@ -2,7 +2,7 @@ services:
   - type: web
     name: survivor-pool
     runtime: python
-    plan: free
+    plan: starter
     rootDir: .
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn --chdir /opt/render/project/src --pythonpath /opt/render/project/src server:application --bind 0.0.0.0:$PORT --workers 1 --threads 8
@@ -15,4 +15,9 @@ services:
       - key: POOL_ORIGIN
         sync: false
       - key: POOL_DB
-        value: /opt/render/project/src/data/pool.sqlite3
+        value: /var/data/pool.sqlite3
+
+    disk:
+      name: survivor-data
+      mountPath: /var/data
+      sizeGB: 1
