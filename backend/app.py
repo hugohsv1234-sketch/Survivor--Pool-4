@@ -30,10 +30,13 @@ class App:
         if self.secure:
             headers.append(("Strict-Transport-Security", "max-age=31536000"))
         try:
-            hosts = {urlsplit(origin).netloc for origin in self.origins}
-            if env.get("HTTP_HOST") not in hosts:
-                raise RuleError("Nicht erlaubte Server-Adresse.", 403)
             path, method = unquote(env.get("PATH_INFO", "/")), env["REQUEST_METHOD"]
+            # Render's internal health check uses an internal host:port rather than
+            # the public POOL_ORIGIN. Allow only GET / for that platform probe.
+            render_probe = method == "GET" and path == "/" and env.get("HTTP_USER_AGENT", "").startswith("Render/")
+            hosts = {urlsplit(origin).netloc for origin in self.origins}
+            if env.get("HTTP_HOST") not in hosts and not render_probe:
+                raise RuleError("Nicht erlaubte Server-Adresse.", 403)
             if path.startswith("/api/"):
                 headers += [("Content-Type", "application/json; charset=utf-8"), ("Cache-Control", "no-store")]
                 if method not in ("GET", "POST"):
