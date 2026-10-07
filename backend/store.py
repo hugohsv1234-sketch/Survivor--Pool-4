@@ -2,6 +2,7 @@ import json
 import sqlite3
 import os
 import time
+from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
 from contextlib import contextmanager
 from pathlib import Path
 from . import demo
@@ -33,7 +34,17 @@ class PostgresConnection:
     def __init__(self, url):
         import psycopg
         from psycopg.rows import dict_row
-        self.raw = psycopg.connect(url, row_factory=dict_row)
+        # Neon may append URL query options that differ across drivers.
+        # Pass SSL options as psycopg kwargs and keep only standard URI fields.
+        parts = urlsplit(url.strip().strip('"').strip("'"))
+        query = dict(parse_qsl(parts.query, keep_blank_values=True))
+        sslmode = query.pop("sslmode", None)
+        query.pop("channel_binding", None)
+        clean_url = urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
+        kwargs = {"row_factory": dict_row}
+        if sslmode:
+            kwargs["sslmode"] = sslmode
+        self.raw = psycopg.connect(clean_url, **kwargs)
 
     @staticmethod
     def _sql(sql):
