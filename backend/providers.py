@@ -36,7 +36,7 @@ def apply_snapshot(store, payload):
     if not isinstance(games, list) or not 1 <= len(games) <= 500:
         raise ValueError("Ungültige Spieleliste")
     with store.transaction() as db:
-        known = {row[0] for row in db.execute("SELECT id FROM teams")}
+        known = {row["id"] for row in db.execute("SELECT id FROM teams")}
         # Lock according to the previous known schedule BEFORE any rescheduling.
         store.lock_due(db, time.time())
         seen, participants = set(), set()
