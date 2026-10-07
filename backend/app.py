@@ -118,7 +118,7 @@ class App:
             row = db.execute("SELECT * FROM rate_limits WHERE key=?", (key,)).fetchone()
             if row and row["count"] >= 30:
                 raise RuleError("Zu viele Versuche. Bitte in 15 Minuten erneut versuchen.", 429)
-            db.execute("INSERT INTO rate_limits VALUES(?,1,?) ON CONFLICT(key) DO UPDATE SET count=count+1", (key, now + 900))
+            db.execute("INSERT INTO rate_limits(key,count,reset_at) VALUES(?,1,?) ON CONFLICT(key) DO UPDATE SET count=rate_limits.count+1,reset_at=excluded.reset_at", (key, now + 900))
 
     @staticmethod
     def fields(data, required, optional=()):
