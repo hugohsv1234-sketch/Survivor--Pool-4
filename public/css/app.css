@@ -4024,3 +4024,79 @@ input,select,textarea{background:#0b233c!important;border-color:#386b9c!importan
   .cinematic-dashboard .paetzold-stadium-hero h1{font-size:clamp(1.9rem,8.3vw,2.7rem)!important;}
 }
 @media(prefers-reduced-motion:reduce){.cinematic-dashboard .paetzold-stadium-hero .paetzold-player{animation:none!important;transition:none!important;}}
+
+
+/* Dashboard banner: clean, realistic reference style. Player merges into stadium. */
+.cinematic-dashboard .paetzold-stadium-hero{
+  grid-template-columns:minmax(135px,32%) minmax(0,1fr)!important;
+  min-height:clamp(245px,26vw,385px)!important;
+  background:radial-gradient(ellipse at 78% 5%,#e53d6a40,transparent 40%),
+    linear-gradient(0deg,#061426bb,#071c33a0),
+    repeating-linear-gradient(170deg,#0c2845 0 4px,#061a30 5px 18px)!important;
+}
+.cinematic-dashboard .paetzold-stadium-hero .hero-player-area{
+  overflow:visible!important;min-height:245px;align-self:stretch;
+  mask-image:linear-gradient(to right,transparent 0%,#000 11%,#000 85%,transparent 100%)!important;
+  -webkit-mask-image:linear-gradient(to right,transparent 0%,#000 11%,#000 85%,transparent 100%)!important;
+}
+.cinematic-dashboard .paetzold-stadium-hero .paetzold-player{
+  inset:-6% -14% -15% 0!important;
+  width:114%!important;height:121%!important;
+  background-position:center bottom!important;
+  background-size:contain!important;
+  filter:drop-shadow(7px 0 15px #020a17aa)!important;
+}
+.cinematic-dashboard .paetzold-stadium-hero .stadium-banner-copy{
+  padding:24px 3vw 24px 1vw!important;align-self:center!important;
+}
+.cinematic-dashboard .paetzold-stadium-hero h1{
+  display:flex!important;flex-direction:row!important;align-items:baseline!important;
+  flex-wrap:nowrap!important;gap:.15em!important;
+  font-family:Impact,"Arial Narrow","Roboto Condensed",sans-serif!important;
+  font-size:clamp(2.2rem,5.3vw,6rem)!important;
+  letter-spacing:-.025em!important;line-height:1.03!important;
+  margin:10px 0 18px!important;
+  white-space:nowrap!important;text-shadow:0 3px 10px #0008!important;
+}
+.cinematic-dashboard .paetzold-stadium-hero h1 span{
+  color:#f3c8d2!important;background:none!important;
+  -webkit-text-fill-color:#f3c8d2!important;-webkit-text-stroke:0!important;
+}
+.cinematic-dashboard .paetzold-stadium-hero h1 em{
+  transform:none!important;color:#f42d59!important;font-style:normal!important;
+  -webkit-text-fill-color:#f42d59!important;
+}
+.cinematic-dashboard .paetzold-stadium-hero .stadium-banner-copy p{
+  color:#f2d5df!important;letter-spacing:.28em!important;font-weight:800!important;
+}
+.cinematic-dashboard .stats-grid .stat-card{
+  background:linear-gradient(150deg,#092139,#07182b)!important;
+  border:1px solid #2e6593!important;border-radius:12px!important;
+  padding:clamp(14px,1.6vw,24px)!important;min-width:0;
+}
+.cinematic-dashboard .stats-grid .stat-card strong{
+  color:#f0c5d0!important;font-size:clamp(1.65rem,2.7vw,2.8rem)!important;
+  font-weight:850!important;
+}
+.cinematic-dashboard .stats-grid .stat-card>div span{
+  color:#efc5d0!important;font-size:clamp(.76rem,1vw,1rem)!important;
+}
+.cinematic-dashboard .stats-grid .stat-card>small{color:#85bdec!important;letter-spacing:.14em!important;}
+.cinematic-dashboard .stats-grid .stat-card:nth-child(2){border-color:#a73b63!important;}
+.cinematic-dashboard .stats-grid .stat-card:nth-child(4){border-color:#3d7cad!important;}
+@media(max-width:1050px){
+  .cinematic-dashboard .paetzold-stadium-hero h1{font-size:clamp(1.8rem,5.1vw,4rem)!important;}
+}
+@media(max-width:760px){
+  .cinematic-dashboard .paetzold-stadium-hero{grid-template-columns:35% 65%!important;min-height:205px!important;}
+  .cinematic-dashboard .paetzold-stadium-hero .hero-player-area{min-height:205px;}
+  .cinematic-dashboard .paetzold-stadium-hero .stadium-banner-copy{padding:16px 8px 16px 0!important;}
+  .cinematic-dashboard .paetzold-stadium-hero h1{font-size:clamp(1.5rem,5.1vw,3rem)!important;gap:.12em!important;}
+  .cinematic-dashboard .paetzold-stadium-hero .stadium-kicker{font-size:.53rem!important;letter-spacing:.12em!important;}
+  .cinematic-dashboard .paetzold-stadium-hero .stadium-banner-copy p{font-size:.58rem!important;letter-spacing:.11em!important;}
+}
+@media(max-width:420px){
+  .cinematic-dashboard .paetzold-stadium-hero{grid-template-columns:32% 68%!important;min-height:175px!important;}
+  .cinematic-dashboard .paetzold-stadium-hero .hero-player-area{min-height:175px;}
+  .cinematic-dashboard .paetzold-stadium-hero h1{font-size:clamp(1.26rem,5vw,1.85rem)!important;}
+}
