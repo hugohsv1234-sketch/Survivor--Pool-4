@@ -43,7 +43,7 @@
   const badge = (text, tone = '') => `<span class="badge ${tone}">${text}</span>`;
   const resultText = r => ({win:'Richtig ✓',loss:'Falsch ✕',pending:'Noch offen',push:'Tie · neutral'}[r]);
   const avatar = (name, large = '') => `<span class="avatar ${large}">${esc(name.slice(0,2).toUpperCase())}</span>`;
-  const teamBadge = (id, size = '') => {const t = teams()[id]; return t.logo ? `<img class="team-logo ${size}" src="${esc(t.logo)}" alt="${esc(t.full_name)}">` : `<span class="team-mark ${size}" style="--team:${esc(t.color)}">${esc(id)}</span>`;};
+  const teamBadge = (id, size = '') => `<span class="team-mark ${size}" aria-label="${esc(teams()[id].full_name)}">${esc(id)}</span>`;
 
   async function api(path, data) {
     let response;
