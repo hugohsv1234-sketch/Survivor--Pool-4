@@ -4149,3 +4149,11 @@ input,select,textarea{background:#0b233c!important;border-color:#386b9c!importan
  .team-logo-wrap.large{width:67px!important;height:67px!important;}
  .team-logo-wrap.tiny{width:30px!important;height:30px!important;}
 }
+
+
+/* Never show browser broken-image icon or alt text over NFL crests. */
+.team-logo-wrap img.team-logo:not(.logo-loaded){visibility:hidden!important;}
+.team-logo-wrap img.team-logo.logo-loaded{visibility:visible!important;}
+.team-logo-wrap img.team-logo[hidden]{display:none!important;}
+.team-logo-wrap .logo-fallback[hidden]{display:none!important;}
+.team-logo-wrap .logo-fallback:not([hidden]){display:flex!important;}
