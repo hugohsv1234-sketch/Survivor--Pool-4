@@ -1,5 +1,7 @@
 """WSGI HTTP adapter. All private data and writes require a server-side session."""
 import hmac
+import base64
+import binascii
 import json
 import mimetypes
 import re
@@ -53,7 +55,7 @@ class App:
                         size = int(env.get("CONTENT_LENGTH", 0))
                     except ValueError:
                         raise RuleError("Ungültige Anfrage.")
-                    if size < 0 or size > 16384:
+                    if size < 0 or size > (110000 if path == '/api/avatar' else 16384):
                         raise RuleError("Anfrage zu groß.", 413)
                     try:
                         data = json.loads(env["wsgi.input"].read(size))
@@ -184,6 +186,43 @@ class App:
             if not sess["user_id"]:
                 raise RuleError("Bitte melde dich mit deinem persönlichen Account an.", 401, "session")
             user = dict(db.execute("SELECT id,username,display_name,role,joined_week FROM users WHERE id=?", (sess["user_id"],)).fetchone())
+            if path == "/api/change-password" and method == "POST":
+                self.fields(data, ("current_password", "new_password", "confirmation"))
+                current = self.text(data, "current_password", 1, 128)
+                new = self.text(data, "new_password", 5, 128)
+                if new != data["confirmation"]:
+                    raise RuleError("Die neuen Passwörter stimmen nicht überein.")
+                stored = db.execute("SELECT password_hash FROM users WHERE id=?", (user["id"],)).fetchone()
+                if not verify_password(current, stored["password_hash"]):
+                    raise RuleError("Das bisherige Passwort ist falsch.", 403)
+                if current == new:
+                    raise RuleError("Bitte wähle ein anderes Passwort.")
+                db.execute("UPDATE users SET password_hash=? WHERE id=?", (hash_password(new), user["id"]))
+                db.execute("DELETE FROM sessions WHERE user_id=? AND token_hash<>?", (user["id"], sess["token_hash"]))
+                return {"ok": True}, None
+            if path == "/api/avatar" and method == "POST":
+                self.fields(data, ("image",))
+                raw = data["image"]
+                if raw is None:
+                    db.execute("DELETE FROM profile_images WHERE user_id=?", (user["id"],))
+                    return {"ok": True}, None
+                if not isinstance(raw, str) or len(raw) > 95000:
+                    raise RuleError("Profilbild zu groß (maximal 65 KB).")
+                match = re.fullmatch(r"data:image/(jpeg|png|webp);base64,([A-Za-z0-9+/]+={0,2})", raw)
+                if not match:
+                    raise RuleError("Bitte ein JPEG-, PNG- oder WebP-Bild verwenden.")
+                try:
+                    image_bytes = base64.b64decode(match.group(2), validate=True)
+                except (ValueError, binascii.Error):
+                    raise RuleError("Bilddaten sind ungültig.")
+                if len(image_bytes) > 65536 or not image_bytes:
+                    raise RuleError("Profilbild zu groß (maximal 65 KB).")
+                kind = match.group(1)
+                valid = (kind == "jpeg" and image_bytes.startswith(b"\\xff\\xd8\\xff")) or (kind == "png" and image_bytes.startswith(b"\\x89PNG\\r\\n\\x1a\\n")) or (kind == "webp" and image_bytes.startswith(b"RIFF") and image_bytes[8:12] == b"WEBP")
+                if not valid:
+                    raise RuleError("Das Bildformat stimmt nicht.")
+                db.execute("INSERT INTO profile_images(user_id,image_data) VALUES(?,?) ON CONFLICT(user_id) DO UPDATE SET image_data=excluded.image_data", (user["id"], raw))
+                return {"ok": True}, None
             self.store.lock_due(db, now)
             if path == "/api/state" and method == "GET":
                 return self.snapshot(db, user, settings, now), None
@@ -267,6 +306,9 @@ class App:
     def snapshot(self, db, user, settings, now):
         games = {g["id"]: dict(g) for g in db.execute("SELECT * FROM games WHERE season=? ORDER BY week,kickoff,id", (settings["season"],))}
         users = [dict(u) for u in db.execute("SELECT id,username,display_name,role,joined_week FROM users")]
+        images = {row["user_id"]: row["image_data"] for row in db.execute("SELECT user_id,image_data FROM profile_images")}
+        for player in users:
+            player["avatar"] = images.get(player["id"])
         known = {}
         for player in users:
             known.setdefault(player["display_name"].strip().casefold(), []).append(player["id"])

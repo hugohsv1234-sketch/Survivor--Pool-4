@@ -11,6 +11,7 @@ from .security import hash_password
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS teams(id TEXT PRIMARY KEY,city TEXT NOT NULL,name TEXT NOT NULL,full_name TEXT NOT NULL,color TEXT NOT NULL,logo TEXT);
 CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY,username TEXT NOT NULL UNIQUE COLLATE NOCASE,display_name TEXT NOT NULL,password_hash TEXT NOT NULL,role TEXT NOT NULL DEFAULT 'player',joined_week INTEGER NOT NULL,created_at REAL NOT NULL);
+CREATE TABLE IF NOT EXISTS profile_images(user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, image_data TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS games(id TEXT PRIMARY KEY,season INTEGER NOT NULL,week INTEGER NOT NULL CHECK(week BETWEEN 1 AND 22),away TEXT NOT NULL REFERENCES teams(id),home TEXT NOT NULL REFERENCES teams(id),kickoff REAL NOT NULL,status TEXT NOT NULL CHECK(status IN ('scheduled','live','final','postponed','cancelled')),away_score INTEGER,home_score INTEGER,started_at REAL,CHECK(away<>home));
 CREATE INDEX IF NOT EXISTS idx_games_season_week ON games(season,week);
 CREATE TABLE IF NOT EXISTS picks(id INTEGER PRIMARY KEY,user_id INTEGER NOT NULL REFERENCES users(id),season INTEGER NOT NULL,week INTEGER NOT NULL,game_id TEXT NOT NULL REFERENCES games(id),team TEXT NOT NULL REFERENCES teams(id),created_at REAL NOT NULL,updated_at REAL NOT NULL,locked_at REAL,UNIQUE(user_id,season,week));
