@@ -3894,3 +3894,39 @@ input,select,textarea{background:#0b233c!important;border-color:#386b9c!importan
 #avatar-upload::file-selector-button{background:#133b62;color:#f1c4ce;border:1px solid #4b8dc3;padding:8px;border-radius:7px;cursor:pointer;}
 .account-setting .form-error:not([hidden]){margin-top:12px;color:#ff728b!important;}
 @media(max-width:780px){.account-settings-grid{grid-template-columns:1fr}.account-setting{padding:12px}}
+
+/* Exact reference image sprite. Upload public/icons/nfl-logo-sprite.png first.
+   If absent, the original-color ESPN team image underneath remains visible. */
+.team-logo-wrap .reference-logo{position:absolute;inset:0;display:block;pointer-events:none;background-image:url('/icons/nfl-logo-sprite.png');background-repeat:no-repeat;background-size:800% 400%;filter:none!important;mix-blend-mode:normal!important;}
+.team-logo-wrap .reference-logo-0{background-position:0.00000% 0.00000%;}
+.team-logo-wrap .reference-logo-1{background-position:14.28571% 0.00000%;}
+.team-logo-wrap .reference-logo-2{background-position:28.57143% 0.00000%;}
+.team-logo-wrap .reference-logo-3{background-position:42.85714% 0.00000%;}
+.team-logo-wrap .reference-logo-4{background-position:57.14286% 0.00000%;}
+.team-logo-wrap .reference-logo-5{background-position:71.42857% 0.00000%;}
+.team-logo-wrap .reference-logo-6{background-position:85.71429% 0.00000%;}
+.team-logo-wrap .reference-logo-7{background-position:100.00000% 0.00000%;}
+.team-logo-wrap .reference-logo-8{background-position:0.00000% 33.33333%;}
+.team-logo-wrap .reference-logo-9{background-position:14.28571% 33.33333%;}
+.team-logo-wrap .reference-logo-10{background-position:28.57143% 33.33333%;}
+.team-logo-wrap .reference-logo-11{background-position:42.85714% 33.33333%;}
+.team-logo-wrap .reference-logo-12{background-position:57.14286% 33.33333%;}
+.team-logo-wrap .reference-logo-13{background-position:71.42857% 33.33333%;}
+.team-logo-wrap .reference-logo-14{background-position:85.71429% 33.33333%;}
+.team-logo-wrap .reference-logo-15{background-position:100.00000% 33.33333%;}
+.team-logo-wrap .reference-logo-16{background-position:0.00000% 66.66667%;}
+.team-logo-wrap .reference-logo-17{background-position:14.28571% 66.66667%;}
+.team-logo-wrap .reference-logo-18{background-position:28.57143% 66.66667%;}
+.team-logo-wrap .reference-logo-19{background-position:42.85714% 66.66667%;}
+.team-logo-wrap .reference-logo-20{background-position:57.14286% 66.66667%;}
+.team-logo-wrap .reference-logo-21{background-position:71.42857% 66.66667%;}
+.team-logo-wrap .reference-logo-22{background-position:85.71429% 66.66667%;}
+.team-logo-wrap .reference-logo-23{background-position:100.00000% 66.66667%;}
+.team-logo-wrap .reference-logo-24{background-position:0.00000% 100.00000%;}
+.team-logo-wrap .reference-logo-25{background-position:14.28571% 100.00000%;}
+.team-logo-wrap .reference-logo-26{background-position:28.57143% 100.00000%;}
+.team-logo-wrap .reference-logo-27{background-position:42.85714% 100.00000%;}
+.team-logo-wrap .reference-logo-28{background-position:57.14286% 100.00000%;}
+.team-logo-wrap .reference-logo-29{background-position:71.42857% 100.00000%;}
+.team-logo-wrap .reference-logo-30{background-position:85.71429% 100.00000%;}
+.team-logo-wrap .reference-logo-31{background-position:100.00000% 100.00000%;}
