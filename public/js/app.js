@@ -53,7 +53,7 @@
     const code = logoCodes[id];
     const url = code ? `https://a.espncdn.com/i/teamlogos/nfl/500/${code}.png` : (t.logo || '');
     return url
-      ? `<span class="team-logo-wrap ${size}"><img class="team-logo ${size}" src="${esc(url)}" alt="${esc(t.full_name)}" loading="lazy" decoding="async" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span class="team-mark logo-fallback ${size}" hidden aria-label="${esc(t.full_name)}">${esc(id)}</span></span>`
+      ? `<span class="team-logo-wrap ${size}"><img class="team-logo ${size}" src="${esc(url)}" alt="${esc(t.full_name)}" loading="lazy" decoding="async" onload="this.classList.add('logo-loaded')" onerror="const fallback=this.nextElementSibling;if(fallback)fallback.hidden=false;this.remove()"><span class="team-mark logo-fallback ${size}" hidden aria-label="${esc(t.full_name)}">${esc(id)}</span></span>`
       : `<span class="team-mark ${size}" aria-label="${esc(t.full_name)}">${esc(id)}</span>`;
   };
 
