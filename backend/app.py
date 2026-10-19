@@ -14,6 +14,8 @@ from .store import Store
 from .demo import week_name
 
 
+HISTORICAL_SHEET = "Frank|JAX-CLE:g|TB-CLE:r|SF-ARI:g|MIN-MIA:g|DAL-TB:r|IND-TEN:p\nJochen|CHI-CAR:g|CAR-ATL:g|DET-NYJ:g|MIN-MIA:g|LV-NE:r|IND-TEN:p\nSven|LV-MIA:g|TB-CLE:r|NYG-TEN:g|MIN-MIA:g|JAX-PHI:g|LAR-ARI:p\nLiche|LAC-ARI:r|TB-CLE:r|NO-LV:r|MIN-MIA:g|-:p|IND-TEN:p\nMomo|LAC-ARI:r|TB-CLE:r|GB-ATL:r|MIN-MIA:g|DAL-TB:r|IND-TEN:p\nLulle|JAX-CLE:g|DAL-WAS:g|GB-ATL:r|MIN-MIA:g|PIT-IND:g|LAR-ARI:p\nLetti|CHI-CAR:g|DAL-WAS:g|NO-LV:r|MIN-MIA:g|DAL-TB:r|IND-TEN:p\nAlec|LAC-ARI:r|GB-NYJ:g|MIN-TB:g|BAL-TEN:g|DAL-TB:r|CAR-PHI:p\nFlo|LAC-ARI:r|TB-CLE:r|GB-ATL:r|DET-CAR:r|DAL-TB:r|IND-TEN:p\nSascha|LAC-ARI:r|TB-CLE:r|CAR-CLE:r|DET-CAR:r|DAL-TB:r|NE-NYJ:p\nMarkus|JAX-CLE:g|CAR-ATL:g|GB-ATL:r|BAL-TEN:g|HOU-TEN:g|IND-TEN:p\nMax|PIT-ATL:g|TB-CLE:r|NO-LV:r|GB-TB:g|DEN-LAC:g|IND-TEN:p\nConner|JAX-CLE:g|TB-CLE:r|GB-ATL:r|BAL-TEN:g|DET-ARI:g|NE-NYJ:p\nBertram|JAX-CLE:g|TB-CLE:r|GB-ATL:r|DET-CAR:r|DAL-TB:r|IND-TEN:p\nPatrick|CHI-CAR:g|CAR-ATL:g|GB-ATL:r|NO-ATL:r|CLE-NYJ:r|IND-TEN:p"
+
 class App:
     def __init__(self, db_path, public_dir, demo_mode=True, pool_password=None,
                  pool_password_hash=None, origins=("http://localhost:8000",), secure=False):
@@ -265,6 +267,21 @@ class App:
     def snapshot(self, db, user, settings, now):
         games = {g["id"]: dict(g) for g in db.execute("SELECT * FROM games WHERE season=? ORDER BY week,kickoff,id", (settings["season"],))}
         users = [dict(u) for u in db.execute("SELECT id,username,display_name,role,joined_week FROM users")]
+        known = {}
+        for player in users:
+            known.setdefault(player["display_name"].strip().casefold(), []).append(player["id"])
+        for line in HISTORICAL_SHEET.splitlines():
+            name, *entries = line.split("|")
+            ids = known.get(name.casefold(), [])
+            if len(ids) != 1:
+                continue
+            for week, entry in enumerate(entries, 1):
+                matchup, status = entry.rsplit(":", 1)
+                if matchup == "-":
+                    continue
+                db.execute("INSERT INTO historical_picks(user_id,season,week,matchup,result) VALUES(?,?,?,?,?) ON CONFLICT(user_id,season,week) DO NOTHING",
+                           (ids[0], settings["season"], week, matchup, {"g":"win","r":"loss","p":"pending"}[status]))
+        history = [dict(h) for h in db.execute("SELECT * FROM historical_picks WHERE season=? ORDER BY week", (settings["season"],))]
         picks = [dict(p) for p in db.execute("SELECT * FROM picks WHERE season=? ORDER BY week", (settings["season"],))]
         public = []
         for pick in picks:
@@ -275,10 +292,18 @@ class App:
             if pick["user_id"] == user["id"] or pick["locked"]:
                 public.append(pick)
         for player in users:
-            player["stats"] = self.player_stats(player, [p for p in picks if p["user_id"] == player["id"]], games, settings, now)
+            own = [p for p in picks if p["user_id"] == player["id"]]
+            player["stats"] = self.player_stats(player, own, games, settings, now)
+            occupied = {p["week"] for p in own}
+            extra = [h for h in history if h["user_id"] == player["id"] and h["week"] not in occupied]
+            player["stats"]["wins"] += sum(h["result"] == "win" for h in extra)
+            player["stats"]["losses"] += sum(h["result"] == "loss" for h in extra)
+            player["stats"]["total"] += len(extra)
+            evaluated = player["stats"]["wins"] + player["stats"]["losses"]
+            player["stats"]["rate"] = round(player["stats"]["wins"] / evaluated * 100) if evaluated else 0
         users.sort(key=lambda u: (-u["stats"]["wins"], u["display_name"].casefold(), u["username"]))
         user = next(u for u in users if u["id"] == user["id"])
-        return {"me": user, "players": users, "picks": public, "games": list(games.values()),
+        return {"me": user, "players": users, "picks": public, "historical_picks": history, "games": list(games.values()),
                 "teams": [dict(t) for t in db.execute("SELECT * FROM teams ORDER BY city,name")],
                 "weeks": [{"number": n, "name": week_name(n)} for n in range(1, 23)],
                 "season": settings["season"], "current_week": settings["current_week"], "now": now,

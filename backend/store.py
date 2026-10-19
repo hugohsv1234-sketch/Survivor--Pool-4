@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY,username TEXT NOT NULL U
 CREATE TABLE IF NOT EXISTS games(id TEXT PRIMARY KEY,season INTEGER NOT NULL,week INTEGER NOT NULL CHECK(week BETWEEN 1 AND 22),away TEXT NOT NULL REFERENCES teams(id),home TEXT NOT NULL REFERENCES teams(id),kickoff REAL NOT NULL,status TEXT NOT NULL CHECK(status IN ('scheduled','live','final','postponed','cancelled')),away_score INTEGER,home_score INTEGER,started_at REAL,CHECK(away<>home));
 CREATE INDEX IF NOT EXISTS idx_games_season_week ON games(season,week);
 CREATE TABLE IF NOT EXISTS picks(id INTEGER PRIMARY KEY,user_id INTEGER NOT NULL REFERENCES users(id),season INTEGER NOT NULL,week INTEGER NOT NULL,game_id TEXT NOT NULL REFERENCES games(id),team TEXT NOT NULL REFERENCES teams(id),created_at REAL NOT NULL,updated_at REAL NOT NULL,locked_at REAL,UNIQUE(user_id,season,week));
+CREATE TABLE IF NOT EXISTS historical_picks(user_id INTEGER NOT NULL REFERENCES users(id),season INTEGER NOT NULL,week INTEGER NOT NULL,matchup TEXT NOT NULL,result TEXT NOT NULL,PRIMARY KEY(user_id,season,week));
 CREATE TABLE IF NOT EXISTS sessions(token_hash TEXT PRIMARY KEY,user_id INTEGER REFERENCES users(id),csrf TEXT NOT NULL,expires REAL NOT NULL);
 CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY,value TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS rate_limits(key TEXT PRIMARY KEY,count INTEGER NOT NULL,reset_at REAL NOT NULL);
