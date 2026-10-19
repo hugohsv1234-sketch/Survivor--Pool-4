@@ -3328,3 +3328,161 @@ input,select,textarea {
   .team-mark,.team-logo { width:54px!important; height:56px!important; }
   .team-choice>strong { font-size:.94rem!important; }
 }
+
+
+/* Stadium Nights — visual-only enhancement. No application logic changes. */
+:root {
+  --bg:#090e12;
+  --surface:#121c21;
+  --surface2:#19252a;
+  --line:#304044;
+  --text:#f5f8f5;
+  --muted:#aabbb8;
+  --lime:#c7ff69;
+  --green:#80e5b0;
+  --radius:19px;
+}
+body {
+  background:
+    radial-gradient(ellipse 70% 42% at 85% -8%,rgba(93,222,185,.13),transparent 75%),
+    radial-gradient(ellipse 70% 40% at 5% 55%,rgba(143,194,75,.065),transparent 78%),
+    var(--bg);
+}
+::selection { background:var(--lime); color:#09130d; }
+.sidebar {
+  background:linear-gradient(175deg,#152329 0%,#0e171c 70%,#101b1e 100%);
+  border-right-color:rgba(192,255,200,.11);
+}
+.topbar {
+  background:rgba(12,21,25,.87);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border-bottom-color:rgba(192,255,200,.11);
+}
+.panel,.stat-card,.game-card,.auth-card {
+  background:linear-gradient(148deg,rgba(30,44,49,.98),rgba(15,25,29,.99));
+  border-color:rgba(182,242,207,.16);
+  box-shadow:0 12px 38px rgba(0,0,0,.17),inset 0 1px rgba(255,255,255,.035);
+}
+.panel,.stat-card,.game-card,.auth-card,.leaderboard-row,.inventory-team {
+  transition:border-color .25s ease,box-shadow .28s ease,transform .28s cubic-bezier(.2,.8,.2,1),background .25s ease;
+}
+@media(hover:hover) and (pointer:fine) {
+  .stat-card:hover,.game-card:hover,.inventory-team:hover {
+    transform:translateY(-4px);
+    border-color:rgba(199,255,105,.42);
+    box-shadow:0 19px 48px rgba(0,0,0,.28),0 0 28px rgba(199,255,105,.055);
+  }
+  .leaderboard-row:hover {background:rgba(199,255,105,.055);}
+  .button.primary:hover {transform:translateY(-2px);box-shadow:0 9px 30px rgba(199,255,105,.21);}
+  .nav-link:hover,.bottom-nav a:hover {color:var(--lime);}
+}
+.button.primary {
+  background:linear-gradient(115deg,#c7ff69,#9ef4a3);
+  color:#0b1a16;
+  box-shadow:0 5px 20px rgba(174,255,117,.12);
+}
+.brand-symbol {
+  background:linear-gradient(145deg,#d7ff91,#9bfa8b);
+  box-shadow:0 0 25px rgba(199,255,105,.16);
+}
+.page-heading h1,.auth-card h1 {letter-spacing:-.045em;}
+.page-heading .eyebrow,.auth-card .eyebrow {color:var(--lime);}
+.pick-hero {
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.26),0 0 45px rgba(180,255,115,.06);
+}
+.pick-hero::after {
+  content:"";
+  position:absolute;
+  z-index:-1;
+  width:55%;
+  height:220%;
+  right:-20%;
+  top:-55%;
+  pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);
+  transform:rotate(25deg) translateX(-190%);
+  animation:stadiumSweep 10s ease-in-out 1.2s infinite;
+}
+.pick-hero.has-pick::after {opacity:.65;}
+.hero-week>b {text-shadow:0 0 30px rgba(199,255,105,.2);}
+.badge.lime,.badge.good,.survivor-chip.alive {
+  box-shadow:0 0 22px rgba(159,244,132,.075);
+}
+.account-shell {
+  position:relative;
+  isolation:isolate;
+  background:
+    radial-gradient(circle at 50% 15%,rgba(167,255,118,.13),transparent 40%),
+    radial-gradient(circle at 90% 85%,rgba(63,186,176,.12),transparent 50%),
+    var(--bg);
+}
+.account-shell::before {
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
+  opacity:.23;
+  background-image:linear-gradient(rgba(172,245,195,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(172,245,195,.07) 1px,transparent 1px);
+  background-size:48px 48px;
+  mask-image:linear-gradient(to bottom,black,transparent 85%);
+}
+.account-shell .auth-card {
+  border:1px solid rgba(199,255,105,.28);
+  box-shadow:0 35px 90px rgba(0,0,0,.43),0 0 65px rgba(199,255,105,.06);
+}
+.account-shell>.brand {margin-top:8px;}
+.account-shell .auth-card,.page-content>* {
+  animation:stadiumRise .48s cubic-bezier(.2,.8,.2,1) both;
+}
+.page-content>*:nth-child(2) {animation-delay:.06s;}
+.page-content>*:nth-child(3) {animation-delay:.11s;}
+.page-content>*:nth-child(4) {animation-delay:.15s;}
+.page-content>*:nth-child(5) {animation-delay:.19s;}
+.stats-grid .stat-card:nth-child(2) {animation-delay:.07s;}
+.stats-grid .stat-card:nth-child(3) {animation-delay:.12s;}
+.stats-grid .stat-card:nth-child(4) {animation-delay:.17s;}
+.stats-grid .stat-card {animation:stadiumRise .5s ease both;}
+.leaderboard-row {animation:stadiumRise .4s ease both;}
+.leaderboard-row:nth-child(2) {animation-delay:.04s;}
+.leaderboard-row:nth-child(3) {animation-delay:.08s;}
+.leaderboard-row:nth-child(4) {animation-delay:.12s;}
+.leaderboard-row:nth-child(5) {animation-delay:.16s;}
+.leaderboard-row:nth-child(6) {animation-delay:.2s;}
+input:focus,select:focus {
+  border-color:var(--lime);
+  box-shadow:0 0 0 3px rgba(199,255,105,.11);
+}
+dialog[open] {animation:stadiumModal .24s cubic-bezier(.2,.8,.2,1) both;}
+dialog::backdrop {background:rgba(2,8,12,.76);backdrop-filter:blur(7px);}
+.bottom-nav {
+  background:rgba(12,22,26,.96);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+  border-top-color:rgba(199,255,105,.16);
+}
+@keyframes stadiumRise {
+  from {opacity:0;transform:translateY(14px);}
+  to {opacity:1;transform:translateY(0);}
+}
+@keyframes stadiumSweep {
+  0%,18% {transform:rotate(25deg) translateX(-190%);}
+  42%,100% {transform:rotate(25deg) translateX(250%);}
+}
+@keyframes stadiumModal {
+  from {opacity:0;transform:translateY(12px) scale(.985);}
+  to {opacity:1;transform:translateY(0) scale(1);}
+}
+@media(max-width:620px) {
+  .page-content>* {animation-duration:.35s;}
+  .pick-hero {box-shadow:0 14px 35px rgba(0,0,0,.22);}
+  .account-shell .auth-card {box-shadow:0 20px 55px rgba(0,0,0,.32);}
+}
+@media(prefers-reduced-motion:reduce) {
+  .pick-hero::after,.account-shell .auth-card,.page-content>*,.stats-grid .stat-card,.leaderboard-row,dialog[open] {animation:none!important;}
+  .stat-card,.game-card,.inventory-team,.button.primary {transform:none!important;}
+}
