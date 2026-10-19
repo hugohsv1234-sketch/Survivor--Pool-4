@@ -43,7 +43,18 @@
   const badge = (text, tone = '') => `<span class="badge ${tone}">${text}</span>`;
   const resultText = r => ({win:'Richtig ✓',loss:'Falsch ✕',pending:'Noch offen',push:'Tie · neutral'}[r]);
   const avatar = (name, large = '') => `<span class="avatar ${large}">${esc(name.slice(0,2).toUpperCase())}</span>`;
-  const teamBadge = (id, size = '') => { const t=teams()[id]; return t.logo ? `<span class="team-logo-wrap ${size}"><img class="team-logo ${size}" src="${esc(t.logo)}" alt="${esc(t.full_name)}" loading="lazy" decoding="async" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span class="team-mark logo-fallback ${size}" hidden aria-label="${esc(t.full_name)}">${esc(id)}</span></span>` : `<span class="team-mark ${size}" aria-label="${esc(t.full_name)}">${esc(id)}</span>`; };
+  // Production teams may have NULL in teams.logo; use ESPN's NFL logo CDN as
+  // a deterministic fallback. Preserve the actual team colors.
+  const logoCodes = {ARI:'ari',ATL:'atl',BAL:'bal',BUF:'buf',CAR:'car',CHI:'chi',CIN:'cin',CLE:'cle',DAL:'dal',DEN:'den',DET:'det',GB:'gb',HOU:'hou',IND:'ind',JAX:'jax',KC:'kc',LAC:'lac',LAR:'lar',LV:'lv',MIA:'mia',MIN:'min',NE:'ne',NO:'no',NYG:'nyg',NYJ:'nyj',PHI:'phi',PIT:'pit',SF:'sf',SEA:'sea',TB:'tb',TEN:'ten',WAS:'wsh'};
+  const teamBadge = (id, size = '') => {
+    const t = teams()[id];
+    if (!t) return '';
+    const code = logoCodes[id];
+    const url = code ? `https://a.espncdn.com/i/teamlogos/nfl/500/${code}.png` : (t.logo || '');
+    return url
+      ? `<span class="team-logo-wrap ${size}"><img class="team-logo ${size}" src="${esc(url)}" alt="${esc(t.full_name)}" loading="lazy" decoding="async" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span class="team-mark logo-fallback ${size}" hidden aria-label="${esc(t.full_name)}">${esc(id)}</span></span>`
+      : `<span class="team-mark ${size}" aria-label="${esc(t.full_name)}">${esc(id)}</span>`;
+  };
 
   async function api(path, data) {
     let response;
