@@ -3816,3 +3816,24 @@ a:focus-visible,button:focus-visible{outline-color:#77c2ff!important;}
 .game-card .team-choice .team-availability.good{color:#78c5ff!important;}
 .game-card .team-choice .team-availability.bad{color:#ff647c!important;}
 .cinematic-dashboard .real-football-player{filter:grayscale(1) contrast(1.24) brightness(.79) sepia(.15) hue-rotate(170deg) drop-shadow(-18px 0 28px #0008)!important;}
+
+
+/* NFL logos restored as monochrome blue: source pixels can never render green. */
+.team-logo-wrap{display:inline-flex;position:relative;flex:0 0 auto;align-items:center;justify-content:center;width:64px;height:66px;vertical-align:middle;}
+.team-logo-wrap.large{width:87px;height:89px;}
+.team-logo-wrap.tiny{width:32px;height:33px;}
+.team-logo-wrap .team-logo{display:block;width:100%!important;height:100%!important;max-width:100%;max-height:100%;object-fit:contain;background:transparent!important;border:0!important;box-shadow:none!important;border-radius:0!important;filter:brightness(0) saturate(100%) invert(72%) sepia(26%) saturate(1250%) hue-rotate(174deg) brightness(102%) contrast(104%)!important;}
+.team-logo-wrap .team-logo[hidden],.team-logo-wrap .logo-fallback[hidden]{display:none!important;}
+.team-logo-wrap .logo-fallback:not([hidden]){display:inline-flex;}
+.team-logo-wrap .logo-fallback{width:100%!important;height:100%!important;background:#143e68!important;color:#b4dfff!important;border:1px solid #4486bc!important;}
+/* Force all semantic success/available text to BLUE, never green. */
+:root{--green:#69bdff;--lime:#f04460;--orange:#98c8ff;--text:#f4f9ff;--muted:#abc9e6;}
+.good,.lime,.status-good,.result-win,.win,.success,.available,.team-availability.good,.team-availability.lime,.week-bottom,.season-card small,.season-widget small,.sidebar-card small,.mini-player small,.recent-pick small,.stat-card small,.team-city,.team-side,.team-availability,.picked-team small,.picked-team p,.table-pick.result-win,.table-legend .good,.ranking-panel .mini-player small{color:#86c9ff!important;}
+.bad,.status-bad,.result-loss,.loss,.error,.team-availability.bad,.table-pick.result-loss,.table-legend .bad{color:#ff6b83!important;}
+.badge.good,.badge.lime,.survivor-chip.alive,.table-pick.result-win{background:#11395e!important;border-color:#4385bd!important;color:#95d1ff!important;}
+.badge.bad,.survivor-chip.out,.table-pick.result-loss{background:#421a2d!important;border-color:#ac3b58!important;color:#ff91a2!important;}
+.sidebar .season-card,.sidebar .season-widget,.sidebar .sidebar-card,.sidebar .pool-card,.sidebar .progress-card,.sidebar .season-progress{background:#0b2847!important;border-color:#376a9a!important;}
+.sidebar .season-card *,.sidebar .season-widget *,.sidebar .sidebar-card *,.sidebar .pool-card *{color:#b4d7f4!important;}
+.sidebar .progress-fill,.sidebar .progress-bar,.sidebar .progress-track>span{background:#ef4260!important;}
+.cinematic-dashboard .real-football-player{filter:grayscale(1) contrast(1.22) brightness(.76) drop-shadow(-18px 0 28px #0008)!important;}
+@media(max-width:620px){.team-logo-wrap{width:60px;height:62px}.team-logo-wrap.large{width:72px;height:74px}.team-logo-wrap.tiny{width:32px;height:33px}}
