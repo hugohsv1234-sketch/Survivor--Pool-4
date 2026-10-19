@@ -133,20 +133,15 @@ class App:
         return value
 
     def api(self, path, method, data, env):
-        if path in ("/api/gate", "/api/login", "/api/register") and method == "POST":
+        if path in ("/api/login", "/api/register") and method == "POST":
             self.rate_limit(env, path)
         with self.store.transaction() as db:
             sess = self.session(db, env)
             if path == "/api/session" and method == "GET":
-                return {"gated": bool(sess), "authenticated": bool(sess and sess["user_id"]),
-                        "csrf": sess["csrf"] if sess else None,
-                        **({"demo": self.demo_mode} if sess else {})}, None
-            if path == "/api/gate" and method == "POST":
-                self.fields(data, ("password",))
-                password = self.text(data, "password")
-                if not verify_password(password, self.pool_hash):
-                    raise RuleError("Das Pool-Passwort stimmt nicht. Versuch es noch einmal.", 401)
-                return self.new_session(db, previous=sess)
+                if not sess:
+                    return self.new_session(db)
+                return {"gated": True, "authenticated": bool(sess["user_id"]),
+                        "csrf": sess["csrf"], "demo": self.demo_mode}, None
             if not sess:
                 raise RuleError("Bitte öffne zuerst den privaten Pool.", 401, "session")
             if method == "POST" and not hmac.compare_digest(env.get("HTTP_X_CSRF_TOKEN", ""), sess["csrf"]):
@@ -163,8 +158,8 @@ class App:
                     display = self.text(data, "display_name", 1, 40).strip()
                     if not display or any(ord(c) < 32 for c in display):
                         raise RuleError("Bitte gib einen gültigen Anzeigenamen ein.")
-                    if len(password) < 10:
-                        raise RuleError("Dein Passwort benötigt mindestens 10 Zeichen.")
+                    if len(password) < 5:
+                        raise RuleError("Dein Passwort benötigt mindestens 5 Zeichen.")
                     if password != data.get("confirmation"):
                         raise RuleError("Die Passwörter stimmen nicht überein.")
                     if db.execute("SELECT 1 FROM users WHERE username=?", (username,)).fetchone():
@@ -183,7 +178,7 @@ class App:
             if path == "/api/logout" and method == "POST":
                 self.fields(data, ())
                 db.execute("DELETE FROM sessions WHERE token_hash=?", (sess["token_hash"],))
-                return {"ok": True}, self.cookie("", True)
+                return self.new_session(db)
             if not sess["user_id"]:
                 raise RuleError("Bitte melde dich mit deinem persönlichen Account an.", 401, "session")
             user = dict(db.execute("SELECT id,username,display_name,role,joined_week FROM users WHERE id=?", (sess["user_id"],)).fetchone())
