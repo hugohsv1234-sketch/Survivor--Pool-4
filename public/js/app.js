@@ -67,19 +67,13 @@
   function closeModal(){ modal.close(); modal.innerHTML=''; }
   function showModal(content) {modal.innerHTML=content; if(!modal.open) modal.showModal();}
   function dialogHeader(title, eyebrow = '') {return `<div class="dialog-head"><div>${eyebrow?`<p class="eyebrow">${eyebrow}</p>`:''}<h2 id="modal-title">${title}</h2></div><button type="button" class="icon-button" data-action="close-modal" aria-label="Schließen">${icon('close')}</button></div>`;}
-  function passwordField(id, label, autocomplete='current-password', minimum=1) {return `<label for="${id}">${label}</label><div class="password-wrap"><input id="${id}" name="${id}" type="password" required minlength="${minimum}" maxlength="128" autocomplete="${autocomplete}" placeholder="${minimum>1?'Mindestens 10 Zeichen':'Passwort eingeben'}"><button type="button" class="icon-button" data-action="toggle-password" data-target="${id}" aria-label="Passwort anzeigen">${icon('eye')}</button></div>`;}
+  function passwordField(id, label, autocomplete='current-password', minimum=1) {return `<label for="${id}">${label}</label><div class="password-wrap"><input id="${id}" name="${id}" type="password" required minlength="${minimum}" maxlength="128" autocomplete="${autocomplete}" placeholder="${minimum>1?`Mindestens ${minimum} Zeichen`:'Passwort eingeben'}"><button type="button" class="icon-button" data-action="toggle-password" data-target="${id}" aria-label="Passwort anzeigen">${icon('eye')}</button></div>`;}
 
-  function renderGate(error='') {
-    state.data=null;
-    app.innerHTML=`<main id="main" class="auth-shell"><div class="auth-top"><a href="#" class="brand" aria-label="Survivor Pool">${brand()}</a><span class="private-label">${icon('lock')} PRIVATER POOL</span></div>
-      <section class="auth-stage"><div class="auth-story"><p class="eyebrow">NFL · REGULAR SEASON & PLAYOFFS</p><h1>EIN TEAM.<br>EIN TIPP.<br><span>STAY ALIVE.</span></h1><p class="auth-description">Dein Spieltag. Deine Entscheidung.<br>Wer bleibt bis zum Super Bowl im Rennen?</p><div class="auth-rules"><span><b>01</b> Team pro Week</span><span><b>32</b> Teams zur Auswahl</span><span><b>01</b> Weg zum Titel</span></div></div>
-      <section class="auth-card"><div class="gate-icon">${icon('shield')}</div><p class="eyebrow">NUR FÜR UNSERE RUNDE</p><h2>Willkommen im Pool.</h2><p>Gib das gemeinsame Pool-Passwort ein.<br>Danach meldest du dich mit deinem Account an.</p><form id="gate-form">${passwordField('password','Pool-Passwort')}<p class="form-error" role="alert" ${error?'':'hidden'}>${esc(error)}</p><button class="button primary wide" type="submit">${icon('lock')} Pool öffnen</button></form><div class="auth-foot">${icon('shield')} Dein privater Spieltag beginnt hier.</div></section></section><footer class="auth-footer"><span>SURVIVOR POOL</span><span>Ein privates Fanprojekt. Nicht mit der NFL verbunden.</span></footer></main>`;
-  }
   function renderAuth() {
     const register=state.authTab==='register';
-    app.innerHTML=`<main id="main" class="account-shell"><a href="#" class="brand">${brand()}</a><section class="auth-card"><p class="eyebrow">${icon('check')} POOL FREIGESCHALTET</p><h1>${register?'Dein Platz im Pool.':'Schön, dass du da bist.'}</h1><p>${register?'Ein eigener Account für deine Entscheidungen.':'Melde dich an und mach deinen nächsten Tipp.'}</p><div class="segmented"><button data-action="auth-tab" data-tab="login" class="${!register?'active':''}">Einloggen</button><button data-action="auth-tab" data-tab="register" class="${register?'active':''}">Account erstellen</button></div>
-      <form id="account-form" data-mode="${register?'register':'login'}"><label for="username">Benutzername</label><input id="username" name="username" required minlength="3" maxlength="24" pattern="[A-Za-z0-9_]{3,24}" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="z. B. max">${register?'<label for="display_name">Anzeigename</label><input id="display_name" name="display_name" required maxlength="40" autocomplete="nickname" placeholder="So sieht dich dein Pool">':''}${passwordField('password','Persönliches Passwort',register?'new-password':'current-password',register?10:1)}${register?passwordField('confirmation','Passwort bestätigen','new-password',10):''}<p class="form-error" role="alert" hidden></p><button class="button primary wide" type="submit">${register?'Account erstellen':'Einloggen'}</button></form>
-      ${state.demo?`<div class="demo-login"><span class="eyebrow">DEMO-ACCOUNTS</span><p>Direkt ausprobieren. Max kann Spiele simulieren.</p><div class="demo-users">${['max','lea','tim','nina','finn','ben'].map(n=>`<button data-action="demo-login" data-user="${n}">${esc(n[0].toUpperCase()+n.slice(1))}</button>`).join('')}</div><small>Passwort für alle: <code>Survivor2026!</code></small></div>`:''}<button class="text-button back-pool" data-action="logout">Pool wieder schließen</button></section><span class="muted small">Ein Account. Deine ganze Saison.</span></main>`;
+    app.innerHTML=`<main id="main" class="account-shell"><a href="#" class="brand">${brand()}</a><section class="auth-card"><p class="eyebrow">${icon('check')} SURVIVOR POOL</p><h1>${register?'Dein Platz im Pool.':'Schön, dass du da bist.'}</h1><p>${register?'Ein eigener Account für deine Entscheidungen.':'Melde dich an und mach deinen nächsten Tipp.'}</p><div class="segmented"><button data-action="auth-tab" data-tab="login" class="${!register?'active':''}">Einloggen</button><button data-action="auth-tab" data-tab="register" class="${register?'active':''}">Account erstellen</button></div>
+      <form id="account-form" data-mode="${register?'register':'login'}"><label for="username">Benutzername</label><input id="username" name="username" required minlength="3" maxlength="24" pattern="[A-Za-z0-9_]{3,24}" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="z. B. max">${register?'<label for="display_name">Anzeigename</label><input id="display_name" name="display_name" required maxlength="40" autocomplete="nickname" placeholder="So sieht dich dein Pool">':''}${passwordField('password','Persönliches Passwort',register?'new-password':'current-password',register?5:1)}${register?passwordField('confirmation','Passwort bestätigen','new-password',5):''}<p class="form-error" role="alert" hidden></p><button class="button primary wide" type="submit">${register?'Account erstellen':'Einloggen'}</button></form>
+      ${state.demo?`<div class="demo-login"><span class="eyebrow">DEMO-ACCOUNTS</span><p>Direkt ausprobieren. Max kann Spiele simulieren.</p><div class="demo-users">${['max','lea','tim','nina','finn','ben'].map(n=>`<button data-action="demo-login" data-user="${n}">${esc(n[0].toUpperCase()+n.slice(1))}</button>`).join('')}</div><small>Passwort für alle: <code>Survivor2026!</code></small></div>`:''}</section><span class="muted small">Ein Account. Deine ganze Saison.</span></main>`;
   }
   const navigation = [['dashboard','Dashboard'],['games','Spieltag'],['season','Saison'],['leaderboard','Leaderboard'],['profile','Mein Profil']];
   function render() {
@@ -200,7 +194,7 @@
       if(before==='pending'&&current?.result==='win'){toast('Dein Team hat gewonnen. Richtig getippt!');$('.pick-hero')?.classList.add('celebrate');}
       if(before==='pending'&&current?.result==='loss')toast('Dein Tipp wurde als falsch ausgewertet.',true);
       if(!quiet)toast('Dein Pool ist aktuell.');
-    }catch(e){if(epoch!==state.epoch)return;if(e.status===401){state.data=null;closeModal();renderGate('Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.');}else{state.online=false;if($('#connection-banner'))$('#connection-banner').innerHTML=connectionBanner();if(!quiet)toast(e.message,true);}}
+    }catch(e){if(epoch!==state.epoch)return;if(e.status===401){state.data=null;closeModal();bootstrap();}else{state.online=false;if($('#connection-banner'))$('#connection-banner').innerHTML=connectionBanner();if(!quiet)toast(e.message,true);}}
   }
   function updateCountdowns() {
     $$('[data-countdown]').forEach(el=>{const diff=Math.max(0,Math.floor(Number(el.dataset.countdown)-now()));const hours=Math.floor(diff/3600),minutes=Math.floor(diff%3600/60),seconds=diff%60;el.textContent=`${hours>23?Math.floor(hours/24)+'T ':''}${String(hours%24).padStart(2,'0')} : ${String(minutes).padStart(2,'0')} : ${String(seconds).padStart(2,'0')}`;if(diff===0&&!el.dataset.expired){el.dataset.expired='true';refresh(true);}});
@@ -228,7 +222,7 @@
       try{receive(await api('demo',{action:'next_week'}));state.week=state.data.current_week;closeModal();render();toast(`${weekLabel(state.week)} ist geöffnet.`);}catch(e){$('.modal-error').hidden=false;$('.modal-error').textContent=e.message;}finally{state.busy=false;button.disabled=false;}return;
     }
     if(action==='logout'){
-      button.disabled=true;try{await api('logout',{});state.epoch++;state.csrf='';state.data=null;closeModal();location.hash='';renderGate();}catch(e){toast(e.message,true);button.disabled=false;}return;
+      button.disabled=true;try{await api('logout',{});state.epoch++;state.csrf='';state.data=null;closeModal();location.hash='';await bootstrap();}catch(e){toast(e.message,true);button.disabled=false;}return;
     }
     if(action==='demo-login'){
       if(state.busy)return;state.busy=true;button.disabled=true;
@@ -237,10 +231,9 @@
   });
   document.addEventListener('change',event=>{if(event.target.id==='week-select'){state.week=Number(event.target.value);state.filter='all';render();}});
   document.addEventListener('submit',async event=>{
-    const form=event.target;if(!['gate-form','account-form','settings-form','demo-form'].includes(form.id))return;event.preventDefault();if(state.busy)return;
+    const form=event.target;if(!['account-form','settings-form','demo-form'].includes(form.id))return;event.preventDefault();if(state.busy)return;
     const values=Object.fromEntries(new FormData(form)),submitter=event.submitter;state.busy=true;if(submitter)submitter.disabled=true;
     try {
-      if(form.id==='gate-form'){const session=await api('gate',{password:values.password});state.csrf=session.csrf;state.demo=session.demo;renderAuth();}
       if(form.id==='account-form'){
         const data=form.dataset.mode==='register'?values:{username:values.username,password:values.password};
         const session=await api(form.dataset.mode,data);state.csrf=session.csrf;receive(await api('state'));state.route='dashboard';location.hash='dashboard';render();
@@ -262,8 +255,8 @@
   modal.addEventListener('click',event=>{if(event.target===modal){const r=modal.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)closeModal();}});
   async function bootstrap() {
     state.epoch++;
-    try{const session=await api('session');state.csrf=session.csrf;state.demo=session.demo;if(session.authenticated){receive(await api('state'));state.route=navigation.some(n=>n[0]===location.hash.slice(1))?location.hash.slice(1):'dashboard';render();}else if(session.gated){state.demo=session.demo;renderAuth();}else renderGate();}
-    catch(e){renderGate(e.message);}
+    try{const session=await api('session');state.csrf=session.csrf;state.demo=session.demo;if(session.authenticated){receive(await api('state'));state.route=navigation.some(n=>n[0]===location.hash.slice(1))?location.hash.slice(1):'dashboard';render();}else renderAuth();}
+    catch(e){renderAuth();toast(e.message,true);}
   }
   // Progressive enhancement. Optional agent tools use the exact same UI actions.
   if(document.modelContext?.registerTool){
