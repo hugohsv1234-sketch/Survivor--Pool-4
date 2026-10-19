@@ -3711,3 +3711,55 @@ input:focus,select:focus{border-color:#6bb9ff!important;box-shadow:0 0 0 3px #36
 .result-icon.result-loss,.table-pick.result-loss{background:#481c32!important;color:#ff8398!important;border-color:#a93d5d!important;}
 .progress-bar,.progress-fill{background:#ff4763!important;}
 a:focus-visible,button:focus-visible{outline-color:#77c2ff!important;}
+
+
+/* Cinematic broadcast dashboard — photo-like atmosphere without external dependencies */
+.cinematic-dashboard{position:relative;isolation:isolate;display:flex;flex-direction:column;gap:14px}
+.cinematic-dashboard:before{content:"";position:absolute;z-index:-2;inset:-25px -25px 0;pointer-events:none;background:radial-gradient(ellipse 52% 24% at 90% 1%,#d62b4b29,transparent 90%),radial-gradient(ellipse 52% 42% at 5% 42%,#1661a72b,transparent 85%);}
+.cinematic-dashboard .stadium-banner{min-height:225px;margin:0;border:1px solid #335a7e;border-radius:11px;position:relative;padding:30px 30px;background:linear-gradient(90deg,#06121cf5 0%,#071522dd 37%,#0a1b2d22 100%),radial-gradient(ellipse at 70% 30%,#ee4d6670,transparent 45%),linear-gradient(135deg,#10233a,#040b15);box-shadow:0 18px 45px #0008;overflow:hidden}
+.cinematic-dashboard .stadium-banner-copy{z-index:5;max-width:77%}
+.cinematic-dashboard .stadium-banner h1{font-size:clamp(3.1rem,5.9vw,6.6rem);letter-spacing:-.025em;white-space:nowrap;text-shadow:0 6px 20px #000b}
+.cinematic-dashboard .stadium-banner p{letter-spacing:.42em;color:#e2ecff}
+.cinematic-dashboard .stadium-banner-number{display:none}
+.cinematic-dashboard .stadium-stands{background:radial-gradient(ellipse at 72% 110%,#1e426d80,transparent 60%),linear-gradient(0deg,#07111e 0%,transparent 60%),repeating-linear-gradient(90deg,#0000 0 18px,#7890a109 19px 21px,#0000 22px 39px)}
+.cinematic-dashboard .stadium-stands:before{content:"";position:absolute;inset:35% 0 0;opacity:.8;background:repeating-linear-gradient(4deg,#03091400 0 12px,#070e19bb 13px 17px,#1b354a99 18px 20px),radial-gradient(ellipse at 50% 90%,#162e4f,transparent 70%);mask-image:linear-gradient(to bottom,transparent,#000 28%,#000)}
+.cinematic-dashboard .stadium-stands:after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 10% 3% at 18% 13%,#fff 0%,#b8dcff 45%,transparent 100%),radial-gradient(ellipse 10% 3% at 45% 6%,#fff 0%,#b8dcff 45%,transparent 100%),radial-gradient(ellipse 10% 3% at 78% 16%,#fff 0%,#b8dcff 45%,transparent 100%);filter:drop-shadow(0 0 13px #ffffffc9);opacity:.85}
+.cinematic-dashboard .stadium-athlete{width:245px;height:285px;right:12%;bottom:-18px;opacity:.95;filter:drop-shadow(-20px 8px 30px #000d);animation:athleteReveal .8s ease-out both}
+.cinematic-dashboard .stadium-athlete .helmet{background:linear-gradient(115deg,#06101c,#284965 35%,#09111d 62%,#03060c);border-color:#8298b4;box-shadow:inset -18px -16px 22px #000b,0 0 28px #f8405b52}
+.cinematic-dashboard .stadium-athlete .shoulders{background:linear-gradient(100deg,#07111e,#254562 37%,#060c14 74%);border-color:#627e9d}
+.cinematic-dashboard .stadium-athlete .jersey{color:#d6e5f5;font-size:24px;bottom:76px}
+.cinematic-dashboard .stats-grid{margin:0;gap:12px;grid-template-columns:repeat(4,minmax(0,1fr))}
+.cinematic-dashboard .stat-card{border-radius:9px;background:linear-gradient(145deg,#0c2239e8,#061421f5)!important;min-height:85px;padding:15px 19px;box-shadow:inset 0 1px #ffffff10,0 7px 20px #0004}
+.cinematic-dashboard .stat-card strong{font-size:1.65rem}
+.cinematic-dashboard .stat-card small{color:#91b8d9}
+.cinematic-dashboard .broadcast-layout{margin:0;gap:12px;grid-template-columns:minmax(0,2.15fr) minmax(305px,.95fr)}
+.cinematic-dashboard .broadcast-layout>section{border-radius:10px;padding:17px 18px;background:linear-gradient(165deg,#071726ed,#040d17fa)!important;border:1px solid #315a7d}
+.cinematic-dashboard .broadcast-layout .games-grid.compact{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.cinematic-dashboard .broadcast-pick-title h2{font-size:1.9rem}
+.cinematic-dashboard .pick-hero{border-radius:8px;min-height:170px;background:linear-gradient(105deg,#091e33,#0c2848 58%,#0a192e)!important;border:1px solid #3676b2!important;box-shadow:inset 0 0 45px #0c53902e,0 9px 22px #0006!important}
+.cinematic-dashboard .hero-week{border-right:1px solid #f53e5d!important;background:linear-gradient(150deg,#102f54,#07172b)!important}
+.cinematic-dashboard .hero-main{background:radial-gradient(ellipse at 90% 80%,#1269b524,transparent 70%)!important}
+.cinematic-dashboard .game-card{border-radius:7px!important;border-color:#3574a7!important;background:linear-gradient(160deg,#0c2a49,#071321)!important}
+.cinematic-dashboard .game-card-head{background:#0c2c49!important;color:#a8d6ff!important}
+.cinematic-dashboard .game-card .matchup{background:radial-gradient(ellipse at 50% 20%,#154c7950,transparent 75%),linear-gradient(180deg,#091e33,#07121f)!important}
+.cinematic-dashboard .game-card .team-choice{background:transparent!important}
+.cinematic-dashboard .game-card .team-choice.selected{background:#431b34!important;border-color:#f23e5e!important}
+.cinematic-dashboard .game-card .team-choice.used{background:#211a2a!important}
+.cinematic-dashboard .game-card .versus{background:transparent!important}
+.cinematic-dashboard .ranking-panel,.cinematic-dashboard .recent-panel{background:linear-gradient(145deg,#081c30,#050f1b)!important;border:1px solid #36668c!important;border-radius:10px}
+.cinematic-dashboard .ranking-panel .mini-player{background:transparent!important;min-height:40px;padding:7px 5px}
+.cinematic-dashboard .ranking-panel .mini-player:nth-child(1),.cinematic-dashboard .ranking-panel .mini-player:nth-child(3){border-left:2px solid #f23c5c!important}
+.cinematic-dashboard .ranking-panel .mini-player.is-me{background:#153757!important;border-color:#4d91d2!important}
+.cinematic-dashboard .ranking-panel .mini-player .rank{color:#c0dfff!important}
+.cinematic-dashboard .ranking-panel .rank-crown{color:#f54865!important}
+.cinematic-dashboard .ranking-panel .panel-link,.cinematic-dashboard .recent-panel .panel-link{background:#0d2946!important;border-color:#3d82bd!important}
+.cinematic-dashboard .recent-panel .recent-pick{background:#0a2036!important}
+.cinematic-dashboard .broadcast-layout .section-heading h2{font-size:1.65rem}
+.cinematic-dashboard .broadcast-layout .legend .dot.green{background:#42a5ff!important}
+.cinematic-dashboard .broadcast-layout .legend .dot.red{background:#f8415e!important}
+.cinematic-dashboard .broadcast-layout .legend .dot.orange{background:#9ab9ec!important}
+@media(max-width:1320px){.cinematic-dashboard .broadcast-layout{grid-template-columns:minmax(0,1.65fr) minmax(275px,.85fr)}.cinematic-dashboard .broadcast-layout .games-grid.compact{grid-template-columns:repeat(2,minmax(0,1fr))}.cinematic-dashboard .stadium-athlete{right:6%}}
+@media(max-width:1060px){.cinematic-dashboard .broadcast-layout{grid-template-columns:1fr}.cinematic-dashboard .broadcast-layout .games-grid.compact{grid-template-columns:repeat(3,minmax(0,1fr))}.cinematic-dashboard .stadium-athlete{right:5%;opacity:.7}}
+@media(max-width:760px){.cinematic-dashboard .broadcast-layout .games-grid.compact{grid-template-columns:repeat(2,minmax(0,1fr))}.cinematic-dashboard .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.cinematic-dashboard .stadium-banner h1{font-size:clamp(2.4rem,8vw,4.4rem)}.cinematic-dashboard .stadium-athlete{opacity:.3}}
+@media(max-width:620px){.cinematic-dashboard .stadium-banner{min-height:165px;padding:20px 16px}.cinematic-dashboard .stadium-banner h1{font-size:clamp(2.1rem,8vw,3.5rem);white-space:normal}.cinematic-dashboard .stadium-banner-copy{max-width:100%}.cinematic-dashboard .stadium-athlete{right:-42px;opacity:.16}.cinematic-dashboard .stadium-banner p{letter-spacing:.18em}.cinematic-dashboard .broadcast-layout .games-grid.compact{grid-template-columns:1fr}.cinematic-dashboard .stat-card{padding:12px}.cinematic-dashboard .broadcast-layout>section{padding:12px}.cinematic-dashboard .broadcast-pick-title h2{font-size:1.45rem}}
+@media(prefers-reduced-motion:reduce){.cinematic-dashboard .stadium-athlete,.cinematic-dashboard .stadium-banner:after{animation:none!important}}
