@@ -16,8 +16,8 @@ def create_app(port=8000, host="127.0.0.1"):
     production = os.environ.get("POOL_ENV") == "production"
     secret_hash = os.environ.get("POOL_PASSWORD_HASH")
     secret = os.environ.get("POOL_PASSWORD")
-    if production and (not (secret_hash or secret) or not os.environ.get("POOL_ORIGIN")):
-        raise RuntimeError("POOL_ENV=production benötigt POOL_PASSWORD_HASH (oder POOL_PASSWORD) und POOL_ORIGIN=https://…")
+    if production and not os.environ.get("POOL_ORIGIN"):
+        raise RuntimeError("POOL_ENV=production benötigt POOL_ORIGIN=https://…")
     if production and not os.environ.get("DATABASE_URL"):
         raise RuntimeError("DATABASE_URL fehlt: Produktion darf nicht auf flüchtiges SQLite zurückfallen.")
     origins = os.environ.get("POOL_ORIGIN", f"http://localhost:{port},http://127.0.0.1:{port}").split(",")
