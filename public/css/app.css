@@ -3670,3 +3670,44 @@ input:focus,select:focus{border-color:#6eb4f1;box-shadow:0 0 0 3px #3a90d429;}
 input:focus,select:focus{border-color:#6bb9ff!important;box-shadow:0 0 0 3px #3685d035!important;}
 ::selection{background:#265e9b;color:white;}
 /* Preserve red=wrong, blue=right; never use green as an outcome indicator. */
+
+
+/* Full red/blue palette pass: all app chrome, cards, outcomes and team placeholders. */
+:root{--bg:#06101c;--surface:#0a192b;--surface2:#102a45;--line:#315777;--lime:#f84260;--green:#6fbaff;--red:#ff4965;--orange:#9dcfff;}
+.sidebar,.sidebar-footer,.sidebar-bottom{background:linear-gradient(180deg,#07182c,#061222)!important;border-color:#294c6d!important;}
+.sidebar .brand,.sidebar .brand-symbol{color:#fff;}
+.sidebar .season-progress,.sidebar .season-card,.sidebar .pool-card,.sidebar .sidebar-card,.sidebar .season-track,.sidebar .week-progress,.sidebar .season-widget{background:#0e2946!important;border-color:#335f85!important;color:#b7d9fa!important;}
+.sidebar .season-progress *, .sidebar .season-card *, .sidebar .pool-card *, .sidebar .sidebar-card *, .sidebar .season-track *, .sidebar .week-progress *, .sidebar .season-widget *{border-color:#315878!important;}
+.sidebar .progress-bar,.sidebar .progress-fill,.sidebar .progress-track>span,.sidebar .progress-track i{background:#f6405c!important;}
+.nav-link.active{background:linear-gradient(90deg,#ba2e4c40,#123a5d)!important;border-color:#305d82!important;}
+.nav-link:hover{background:#163454!important;}
+.panel,.ranking-panel,.recent-panel,.stat-card,.game-card{background:linear-gradient(145deg,#0e2338,#071726)!important;border-color:#305674!important;}
+.pick-hero,.pick-hero.has-pick,.pick-hero.won,.hero-main,.picked-team{background:linear-gradient(130deg,#14395c,#0b223b 70%,#091a2d)!important;border-color:#4386bf!important;color:#f6f9ff!important;}
+.hero-week{background:linear-gradient(160deg,#102c4b,#071827)!important;border-color:#346c9c!important;}
+.pick-hero .hero-top,.pick-hero .hero-bottom,.pick-hero .hero-sub,.pick-hero .picked-team small{color:#b4d5f3!important;}
+.pick-hero .badge,.pick-hero .badge.good{background:#123c64!important;color:#8ecaff!important;border-color:#4487c1!important;}
+.pick-hero .result-win,.pick-hero .result-pending{color:#87c9ff!important;}
+.pick-hero .result-loss{color:#ff687e!important;}
+.game-card .matchup,.game-card .team-choice,.game-card .team-choice.unavailable,.game-card .team-choice.used,.game-card .team-choice.selected,.game-card .team-choice.opponent-blocked{background:#0b2237!important;border-color:#31577a!important;}
+.game-card .team-choice.used,.game-card .team-choice.selected{background:#123b62!important;}
+.game-card .team-choice.selected{border-color:#ff4b67!important;}
+.game-card .team-choice .team-mark,.game-card .team-choice .team-logo,.game-card .team-choice .team-badge,.team-mark,.team-logo,.team-badge,.team-initials,.recent-pick .team-mark,.recent-pick .team-logo,.picked-team .team-mark,.picked-team .team-logo{background:#123b62!important;border-color:#3878ad!important;box-shadow:none!important;}
+.game-card .team-choice .team-mark *, .game-card .team-choice .team-badge *, .team-mark *, .team-badge *, .team-initials *{color:#e1f2ff!important;}
+.game-card .team-side,.game-card .team-city,.game-card .team-availability,.game-card .team-choice strong{color:#b6d5f1!important;}
+.game-card .team-choice.selected .team-availability,.game-card .team-choice .team-availability.good{color:#80c5ff!important;}
+.game-card .team-choice.used .team-availability,.game-card .team-choice .team-availability.bad{color:#ff7287!important;}
+.game-card .versus,.game-card .game-final,.game-card .game-card-head{background:#0d2942!important;border-color:#305779!important;}
+.game-card .versus b,.game-card .versus small{color:#f2f8ff!important;}
+.mini-player,.recent-pick{background:#0b1e32!important;border-color:#2c5071!important;}
+.mini-player.is-me{background:#15395c!important;border-color:#5089ba!important;}
+.mini-player .avatar,.leaderboard-row .avatar,.avatar{background:#23476b!important;color:#e4f3ff!important;border-color:#4a83b5!important;}
+.mini-player .rank,.mini-player strong,.recent-pick b{color:#d7ebff!important;}
+.mini-player .rank-crown{color:#ff4b65!important;}
+.ranking-panel .panel-link,.recent-panel .panel-link{background:#112e4b!important;border-color:#3c739f!important;color:#c5e3ff!important;}
+.rule-note,.legend{color:#b7d1e8!important;}
+.legend .dot.green{background:#67b7ff!important;}
+.legend .dot.orange{background:#ff526b!important;}
+.result-icon.result-win,.table-pick.result-win{background:#123b62!important;color:#8bcaff!important;border-color:#3978b2!important;}
+.result-icon.result-loss,.table-pick.result-loss{background:#481c32!important;color:#ff8398!important;border-color:#a93d5d!important;}
+.progress-bar,.progress-fill{background:#ff4763!important;}
+a:focus-visible,button:focus-visible{outline-color:#77c2ff!important;}
