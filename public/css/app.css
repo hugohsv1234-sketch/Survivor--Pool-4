@@ -3637,3 +3637,36 @@ input:focus,select:focus{border-color:#6eb4f1;box-shadow:0 0 0 3px #3a90d429;}
 @media(max-width:780px){.broadcast-layout .games-grid.compact{grid-template-columns:repeat(2,minmax(0,1fr));}.stadium-banner{min-height:220px}.stadium-athlete{right:6%;transform:scale(.8);transform-origin:bottom right;opacity:.36}.stadium-banner-copy{max-width:85%;}}
 @media(max-width:620px){.stadium-banner{min-height:172px;padding:22px 17px}.stadium-banner h1{font-size:clamp(2.05rem,8vw,3.35rem);white-space:normal}.stadium-banner-copy{max-width:100%}.stadium-athlete{right:-36px;opacity:.18;animation:none}.stadium-banner p{font-size:.68rem;letter-spacing:.19em}.broadcast-layout .games-grid.compact{grid-template-columns:1fr}.broadcast-layout>section{padding:14px}.ranking-panel .mini-player{min-height:48px}}
 @media(prefers-reduced-motion:reduce){.stadium-athlete{animation:none!important}.stadium-banner:after{animation:none!important}}
+
+
+/* Strict red/blue visual palette: remove green from UI and status accents. */
+:root{--bg:#06101d;--surface:#0b1929;--surface2:#112840;--line:#2c4e70;--lime:#ff425c;--green:#6fb8ff;--red:#ff425c;--orange:#8fc6ff;--text:#f6f9ff;--muted:#a6bfd6;}
+.good,.lime,.orange{color:#77bdff!important;}
+.bad{color:#ff596e!important;}
+.dot.green{background:#6bb5ff!important;}
+.dot.orange{background:#a0cfff!important;}
+.badge.good,.badge.lime,.survivor-chip.alive{background:#123452!important;color:#91cfff!important;border-color:#3977b0!important;box-shadow:0 0 18px #347fc72a!important;}
+.badge.bad,.survivor-chip.out{background:#411c2c!important;color:#ff8294!important;border-color:#a53852!important;}
+.result-win,.result-pending{color:#83c5ff!important;}
+.result-loss{color:#ff657b!important;}
+.table-pick.result-win{background:#123456!important;color:#9bd2ff!important;border-color:#3b7daf!important;}
+.table-pick.result-loss{background:#431b2c!important;color:#ff94a4!important;border-color:#aa3956!important;}
+.table-pick.result-pending{background:#142d48!important;color:#bedbfa!important;border-color:#3d668e!important;}
+.team-choice.selected,.team-choice.selected:hover{background:#132f50!important;border-color:#478fce!important;box-shadow:inset 0 0 0 1px #478fce,0 0 20px #367fc72a!important;}
+.team-choice.used{background:#351a29!important;border-color:#a03950!important;}
+.team-choice .team-availability.good,.team-choice .team-availability.lime{color:#86c8ff!important;}
+.pick-hero,.pick-hero.has-pick,.pick-hero.won{background:linear-gradient(125deg,#102e50,#0b192a 72%)!important;border-color:#3e78a9!important;box-shadow:0 16px 42px #0109128a!important;}
+.hero-week{background:linear-gradient(155deg,#0b2440,#071522)!important;}
+.hero-week>b{color:#f4f9ff!important;text-shadow:0 0 24px #478edc80!important;}
+.hero-main,.hero-top,.hero-bottom{background:transparent!important;}
+.stats-grid .stat-card{background:linear-gradient(145deg,#10263d,#081827)!important;border-color:#315778!important;}
+.stat-card .good,.stat-card .lime{color:#82c5ff!important;}
+.mini-player.is-me,.leaderboard-row.is-me{background:#172d4a!important;border-color:#4b85bd!important;}
+.mini-player.is-me .rank,.leaderboard-row.is-me .big-rank{color:#91cfff!important;}
+.button.primary,.button.dark{background:linear-gradient(110deg,#ff4b63,#d62d4b)!important;color:#fff!important;border-color:#ed3856!important;}
+.button.primary:hover,.button.dark:hover{background:#ff5c73!important;}
+.brand-symbol{background:linear-gradient(145deg,#ff5068,#d92e4c)!important;}
+.match-status.live{background:#481b2d!important;color:#ff8ca0!important;border-color:#a33d59!important;}
+input:focus,select:focus{border-color:#6bb9ff!important;box-shadow:0 0 0 3px #3685d035!important;}
+::selection{background:#265e9b;color:white;}
+/* Preserve red=wrong, blue=right; never use green as an outcome indicator. */
