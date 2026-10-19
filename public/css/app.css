@@ -3930,3 +3930,97 @@ input,select,textarea{background:#0b233c!important;border-color:#386b9c!importan
 .team-logo-wrap .reference-logo-29{background-position:71.42857% 100.00000%;}
 .team-logo-wrap .reference-logo-30{background-position:85.71429% 100.00000%;}
 .team-logo-wrap .reference-logo-31{background-position:100.00000% 100.00000%;}
+
+
+/* Dashboard stadium composition based on the requested reference:
+   actual player photo asset path: /icons/paetzold-player.png */
+.cinematic-dashboard .paetzold-stadium-hero{
+  min-height:clamp(240px,30vw,440px)!important;
+  display:grid!important;grid-template-columns:minmax(170px,36%) minmax(0,1fr)!important;
+  gap:0!important;align-items:center!important;
+  padding:0!important;isolation:isolate;
+  border:1px solid #547ba8!important;border-bottom-color:#e63b63!important;
+  border-radius:16px!important;
+  background:
+    radial-gradient(ellipse at 14% 48%,#ed284d55 0,transparent 37%),
+    radial-gradient(ellipse at 90% 25%,#257dd36e 0,transparent 44%),
+    linear-gradient(0deg,#041223dd,#04122377),
+    repeating-linear-gradient(164deg,#071d35 0 12px,#0d2947 14px 19px,#06172a 23px 34px)!important;
+  box-shadow:0 20px 55px #0007,inset 0 0 55px #020814a0!important;
+}
+.cinematic-dashboard .paetzold-stadium-hero:before{
+  content:"";position:absolute;inset:0;z-index:-1;
+  background:radial-gradient(ellipse at 50% 90%,#1661a055,transparent 60%),
+  repeating-linear-gradient(8deg,transparent 0 29px,#7ca9d011 30px 31px,transparent 32px 63px);
+  opacity:1;pointer-events:none;
+}
+.cinematic-dashboard .paetzold-stadium-hero .hero-player-area{
+  position:relative;align-self:stretch;min-height:240px;overflow:hidden;
+  mask-image:linear-gradient(90deg,#000 0%,#000 75%,transparent 100%);
+}
+.cinematic-dashboard .paetzold-stadium-hero .paetzold-player{
+  position:absolute!important;inset:-7% -2% -14% 0!important;
+  display:block!important;width:100%!important;height:122%!important;
+  background-image:url('/icons/paetzold-player.png')!important;
+  background-size:contain!important;background-repeat:no-repeat!important;
+  background-position:50% 25%!important;
+  filter:drop-shadow(13px 9px 23px #010611bb)!important;
+  opacity:1!important;transform:none!important;
+  animation:paetzold-player-reveal .9s ease-out both;
+}
+.cinematic-dashboard .paetzold-stadium-hero .stadium-banner-copy{
+  position:relative!important;z-index:3!important;max-width:100%!important;
+  padding:26px 4vw 26px 0!important;margin:0!important;text-align:left!important;
+  transform:none!important;
+}
+.cinematic-dashboard .paetzold-stadium-hero .stadium-kicker{
+  color:#efc0cd!important;letter-spacing:.25em;font-size:clamp(.56rem,.9vw,.8rem);
+}
+.cinematic-dashboard .paetzold-stadium-hero h1{
+  display:flex;flex-direction:column;align-items:flex-start;gap:0;
+  font-family:Impact,"Arial Narrow",sans-serif!important;
+  font-size:clamp(3rem,7.5vw,7.7rem)!important;line-height:.86!important;
+  letter-spacing:-.035em!important;white-space:nowrap!important;
+  text-shadow:0 5px 0 #07101f,0 13px 26px #000a!important;
+  margin:14px 0 24px!important;
+}
+.cinematic-dashboard .paetzold-stadium-hero h1 span{
+  color:#f8eaf0!important;
+  -webkit-text-stroke:1px #c3d2e8;
+  background:linear-gradient(180deg,#fff 15%,#d1d9e7 53%,#f1aab9 100%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+}
+.cinematic-dashboard .paetzold-stadium-hero h1 em{
+  font-style:italic!important;letter-spacing:-.015em!important;
+  color:#f03b64!important;text-shadow:0 7px 15px #10081488!important;
+  transform:translateX(18%);
+}
+.cinematic-dashboard .paetzold-stadium-hero .stadium-banner-copy p{
+  color:#f0b8c9!important;font-size:clamp(.66rem,1.3vw,1.06rem)!important;
+  letter-spacing:clamp(.15em,.45vw,.48em)!important;white-space:nowrap;
+}
+.cinematic-dashboard .paetzold-stadium-hero .stadium-hero-glow{
+  position:absolute;inset:auto 0 0;z-index:2;height:3px;
+  background:linear-gradient(90deg,#e52c53,#366fae,#e52c53);
+  box-shadow:0 0 16px #d9366a99;pointer-events:none;
+}
+@keyframes paetzold-player-reveal{from{opacity:0;translate:-20px 10px}to{opacity:1;translate:0 0}}
+@media(hover:hover) and (prefers-reduced-motion:no-preference){
+  .cinematic-dashboard .paetzold-stadium-hero .paetzold-player{transition:scale .5s ease,translate .5s ease;}
+  .cinematic-dashboard .paetzold-stadium-hero:hover .paetzold-player{scale:1.045;}
+}
+@media(max-width:760px){
+  .cinematic-dashboard .paetzold-stadium-hero{grid-template-columns:40% 60%!important;min-height:220px!important;}
+  .cinematic-dashboard .paetzold-stadium-hero .hero-player-area{min-height:220px;}
+  .cinematic-dashboard .paetzold-stadium-hero .stadium-banner-copy{padding:20px 10px 20px 0!important;}
+  .cinematic-dashboard .paetzold-stadium-hero h1{font-size:clamp(2.2rem,8.5vw,4rem)!important;letter-spacing:-.045em!important;}
+  .cinematic-dashboard .paetzold-stadium-hero h1 em{transform:translateX(8%);}
+  .cinematic-dashboard .paetzold-stadium-hero .stadium-kicker{letter-spacing:.11em;}
+  .cinematic-dashboard .paetzold-stadium-hero .stadium-banner-copy p{letter-spacing:.13em!important;font-size:.61rem!important;}
+}
+@media(max-width:400px){
+  .cinematic-dashboard .paetzold-stadium-hero{grid-template-columns:36% 64%!important;min-height:190px!important;}
+  .cinematic-dashboard .paetzold-stadium-hero .hero-player-area{min-height:190px;}
+  .cinematic-dashboard .paetzold-stadium-hero h1{font-size:clamp(1.9rem,8.3vw,2.7rem)!important;}
+}
+@media(prefers-reduced-motion:reduce){.cinematic-dashboard .paetzold-stadium-hero .paetzold-player{animation:none!important;transition:none!important;}}
