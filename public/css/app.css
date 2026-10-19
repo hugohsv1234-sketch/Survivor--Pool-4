@@ -3865,3 +3865,14 @@ input,select,textarea{background:#0b233c!important;border-color:#386b9c!importan
 /* Team photos may contain any color; the player remains monochrome. */
 .cinematic-dashboard .real-football-player{filter:grayscale(1) contrast(1.22) brightness(.78) drop-shadow(-18px 0 28px #0008)!important;}
 @media(max-width:620px){.team-logo-wrap{width:58px;height:60px}.team-logo-wrap.large{width:72px;height:74px}.team-logo-wrap.tiny{width:32px;height:33px}}
+
+
+/* Actual team crests, unfiltered and in the official team colors. */
+.team-logo-wrap{display:inline-flex;align-items:center;justify-content:center;position:relative;vertical-align:middle;width:64px;height:66px;flex:0 0 auto;background:transparent!important;border:0!important;}
+.team-logo-wrap.large{width:87px;height:89px;}
+.team-logo-wrap.tiny{width:32px;height:33px;}
+.team-logo-wrap img.team-logo{display:block;width:100%!important;height:100%!important;max-width:100%;max-height:100%;object-fit:contain;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;filter:none!important;opacity:1!important;mix-blend-mode:normal!important;}
+.team-logo-wrap img.team-logo[hidden],.team-logo-wrap .logo-fallback[hidden]{display:none!important;}
+.team-logo-wrap .logo-fallback:not([hidden]){display:inline-flex!important;}
+.team-logo-wrap .logo-fallback{width:100%!important;height:100%!important;background:#153b62!important;border:1px solid #4389c3!important;color:#f1c4ce!important;}
+@media(max-width:620px){.team-logo-wrap{width:58px;height:60px}.team-logo-wrap.large{width:72px;height:74px}.team-logo-wrap.tiny{width:32px;height:33px}}
