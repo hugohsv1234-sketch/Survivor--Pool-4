@@ -5,7 +5,7 @@
   --surface2:#060c18;
   --line:#091120;
   --text:#f2f4ec;
-  --muted:#a5ae9e;
+  --muted:#5495d2;
   --lime:#439cc9;
   --green:#4199c6;
   --red:#f18b8b;
@@ -220,7 +220,7 @@ b,strong {
   color:var(--lime);
 }
 .badge.demo {
-  color:#c0c7b8;
+  color:#8bc6ff;
   letter-spacing:1.2px;
   font-size:.75rem;
   background:transparent;
@@ -657,7 +657,7 @@ code {
   gap:11px;
   padding:16px 9px 24px;
   border-top:1px solid var(--line);
-  color:#d3dbcc;
+  color:#8bc6ff;
   font-size:.875rem;
 }
 .pool-label small {
@@ -825,7 +825,7 @@ code {
   color:#3581ac;
 }
 .breadcrumb b {
-  color:#cfd7c7;
+  color:#8bc6ff;
   font-weight:450;
 }
 .header-actions {
@@ -3337,7 +3337,7 @@ input,select,textarea {
   --surface2:#19252a;
   --line:#304044;
   --text:#f5f8f5;
-  --muted:#aabbb8;
+  --muted:#5495d2;
   --lime:#429ac7;
   --green:#419ac7;
   --radius:19px;
@@ -3816,3 +3816,52 @@ a:focus-visible,button:focus-visible{outline-color:#77c2ff!important;}
 .game-card .team-choice .team-availability.good{color:#78c5ff!important;}
 .game-card .team-choice .team-availability.bad{color:#ff647c!important;}
 .cinematic-dashboard .real-football-player{filter:grayscale(1) contrast(1.24) brightness(.79) sepia(.15) hue-rotate(170deg) drop-shadow(-18px 0 28px #0008)!important;}
+
+
+/* Design contract: ONLY real NFL logo images retain original team colors.
+   All UI surfaces blue/red, all ordinary text pale red. */
+:root{--text:#f3c5ce;--muted:#d9aab8;--green:#75baff;--lime:#ed4565;--orange:#88b9ee;--red:#ff5372;--bg:#061222;--surface:#0b2037;--surface2:#113451;--line:#3b6e9d;}
+body,main,aside,section,article,header,footer,nav,p,span,small,div,label,li,td,th,button,input,select,textarea,h1,h2,h3,h4,h5,h6,strong,b{color:#f1c4ce;}
+a{color:#f1b3c4;}
+a:hover{color:#ff829d;}
+input,select,textarea{background:#0b233c!important;border-color:#386b9c!important;color:#ffe1e6!important;}
+::placeholder{color:#cb9eae!important;}
+/* Positive semantic values remain BLUE; failures remain RED. */
+.good,.lime,.status-good,.result-win,.win,.success,.available,.team-availability.good,.team-availability.lime,.dot-label.available,.stat-card .good,.table-pick.result-win,.survivor-chip.alive{color:#8ac9ff!important;}
+.bad,.status-bad,.result-loss,.loss,.error,.team-availability.bad,.table-pick.result-loss,.survivor-chip.out{color:#ff6883!important;}
+.badge.good,.badge.lime,.table-pick.result-win{background:#143d63!important;border-color:#488cc5!important;color:#9bd2ff!important;}
+.badge.bad,.table-pick.result-loss{background:#481c32!important;border-color:#ba4864!important;color:#ff9cad!important;}
+/* Every olive/green-colored panel from the screenshots */
+.sidebar .season-card,.sidebar .season-widget,.sidebar .sidebar-card,.sidebar .pool-card,.sidebar .progress-card,.sidebar .season-progress{background:#0c2a48!important;border-color:#396c9a!important;}
+.sidebar .season-card *,.sidebar .season-widget *,.sidebar .sidebar-card *,.sidebar .pool-card *{color:#eac0cb!important;}
+.sidebar .progress-fill,.sidebar .progress-bar,.sidebar .progress-track>span,.progress-fill,.progress-bar{background:#f04462!important;}
+.stat-card,.ranking-panel,.recent-panel,.leaderboard-panel,.leaderboard-header,.leaderboard-row,.pick-hero,.hero-main,.hero-week,.picked-team,.game-card,.game-card-head,.game-final,.matchup,.team-choice,.team-choice.unavailable,.team-choice.used,.team-choice.selected,.season-panel,.usage-grid,.usage-card,.usage-item,.team-usage,.team-usage-card,.team-status,.season-team,.season-team-card,.pick-banner,.pick-alert,.pick-summary,.week-summary,.week-pick{border-color:#3c70a0!important;}
+.leaderboard-header,.table-header,thead,thead tr,thead th{background:#112e4c!important;color:#f2bac7!important;}
+.leaderboard-row,.leaderboard-panel tbody tr{background:#0b2036!important;}
+.leaderboard-row:nth-child(even),.leaderboard-panel tbody tr:nth-child(even){background:#112c46!important;}
+.leaderboard-row.is-me{background:#173b5d!important;}
+.big-rank,.leaderboard-header span,.leader-player b,.leader-player small,.mini-player strong,.mini-player small{color:#efbfca!important;}
+.pick-hero,.pick-hero.has-pick,.pick-hero.won,.picked-team,.hero-main{background:linear-gradient(120deg,#10385f,#0a213a)!important;}
+.hero-week{background:#0d2c4c!important;border-right:1px solid #ed4565!important;}
+.game-card,.matchup,.team-choice,.team-choice.unavailable{background:#0d2945!important;}
+.team-choice.selected{background:#153d63!important;}
+.team-choice.used{background:#3c1d35!important;}
+.game-card-head,.game-final{background:#102f4c!important;}
+.week-summary,.pick-banner,.pick-alert,.pick-summary{background:#123657!important;}
+.team-usage,.team-usage-card,.usage-card,.usage-item,.season-team,.season-team-card,.team-status{background:#112e4b!important;color:#eebbc8!important;}
+.team-usage *, .team-usage-card *, .usage-card *, .usage-item *, .season-team *, .season-team-card *, .team-status *{color:#f0c1cb!important;}
+.table-pick.result-pending{background:#102e4c!important;color:#edc0cd!important;}
+.legend .dot.green,.dot.green{background:#5eb1ff!important;}
+.legend .dot.orange,.dot.orange{background:#93c9ff!important;}
+.legend .dot.red,.dot.red{background:#f34766!important;}
+/* Preserve ORIGINAL colors and outlines of real NFL logos. */
+.team-logo-wrap{display:inline-flex;position:relative;align-items:center;justify-content:center;flex:0 0 auto;width:64px;height:66px;vertical-align:middle;background:transparent!important;border:0!important;}
+.team-logo-wrap.large{width:87px;height:89px;}
+.team-logo-wrap.tiny{width:32px;height:33px;}
+.team-logo-wrap .team-logo{width:100%!important;height:100%!important;max-width:100%;max-height:100%;display:block;object-fit:contain;background:transparent!important;border:0!important;box-shadow:none!important;border-radius:0!important;filter:none!important;opacity:1!important;}
+.team-logo-wrap .team-logo[hidden],.team-logo-wrap .logo-fallback[hidden]{display:none!important;}
+.team-logo-wrap .logo-fallback:not([hidden]){display:inline-flex!important;}
+.team-logo-wrap .logo-fallback{width:100%!important;height:100%!important;background:#143d63!important;border:1px solid #4d8ac3!important;color:#f1c1cb!important;}
+/* Team photos may contain any color; the player remains monochrome. */
+.cinematic-dashboard .real-football-player{filter:grayscale(1) contrast(1.22) brightness(.78) drop-shadow(-18px 0 28px #0008)!important;}
+@media(max-width:620px){.team-logo-wrap{width:58px;height:60px}.team-logo-wrap.large{width:72px;height:74px}.team-logo-wrap.tiny{width:32px;height:33px}}
