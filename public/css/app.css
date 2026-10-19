@@ -3763,3 +3763,35 @@ a:focus-visible,button:focus-visible{outline-color:#77c2ff!important;}
 @media(max-width:760px){.cinematic-dashboard .broadcast-layout .games-grid.compact{grid-template-columns:repeat(2,minmax(0,1fr))}.cinematic-dashboard .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.cinematic-dashboard .stadium-banner h1{font-size:clamp(2.4rem,8vw,4.4rem)}.cinematic-dashboard .stadium-athlete{opacity:.3}}
 @media(max-width:620px){.cinematic-dashboard .stadium-banner{min-height:165px;padding:20px 16px}.cinematic-dashboard .stadium-banner h1{font-size:clamp(2.1rem,8vw,3.5rem);white-space:normal}.cinematic-dashboard .stadium-banner-copy{max-width:100%}.cinematic-dashboard .stadium-athlete{right:-42px;opacity:.16}.cinematic-dashboard .stadium-banner p{letter-spacing:.18em}.cinematic-dashboard .broadcast-layout .games-grid.compact{grid-template-columns:1fr}.cinematic-dashboard .stat-card{padding:12px}.cinematic-dashboard .broadcast-layout>section{padding:12px}.cinematic-dashboard .broadcast-pick-title h2{font-size:1.45rem}}
 @media(prefers-reduced-motion:reduce){.cinematic-dashboard .stadium-athlete,.cinematic-dashboard .stadium-banner:after{animation:none!important}}
+
+
+/* Real photographed football player + subtle responsive, interactive broadcast effects. */
+.cinematic-dashboard .stadium-banner{--mouse-x:0;--mouse-y:0;min-height:265px;overflow:hidden;isolation:isolate;background:radial-gradient(ellipse at 83% 7%,#fb3c6073,transparent 43%),linear-gradient(100deg,#06101eea 0%,#081728b0 56%,#112d4e 100%)!important;}
+.cinematic-dashboard .stadium-banner:after{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:linear-gradient(90deg,#06101af5 0%,#06101ac7 32%,#07152552 57%,#06101a1a 100%),radial-gradient(ellipse at 88% 88%,#f22c4b40,transparent 50%);}
+.cinematic-dashboard .stadium-banner-copy{position:relative;z-index:3;transform:translate3d(calc(var(--mouse-x)*-4px),calc(var(--mouse-y)*-3px),0);transition:transform .15s ease-out;}
+.cinematic-dashboard .stadium-banner h1{font-size:clamp(3.1rem,5.7vw,6.5rem);text-shadow:0 5px 22px #000b;letter-spacing:-.03em;}
+.cinematic-dashboard .stadium-stands{z-index:-1;transform:translate3d(calc(var(--mouse-x)*-6px),calc(var(--mouse-y)*-4px),0);transition:transform .15s ease-out;}
+.cinematic-dashboard .real-football-player{position:absolute;z-index:1;right:0;bottom:-1px;width:56%;height:112%;pointer-events:none;background-image:url("https://commons.wikimedia.org/wiki/Special:Redirect/file/Daniel_Jones_%2838342475601%29.jpg");background-size:cover;background-position:center 37%;filter:contrast(1.28) saturate(.65) brightness(.76) drop-shadow(-18px 0 28px #0008);mask-image:linear-gradient(to right,transparent 0%,#000 24%,#000 95%),linear-gradient(to top,#000 75%,transparent 100%);mask-composite:intersect;transform:translate3d(calc(var(--mouse-x)*12px),calc(var(--mouse-y)*8px),0) scale(1.06);transition:transform .25s ease-out;}
+.cinematic-dashboard .player-photo-credit{position:absolute;z-index:4;bottom:6px;right:9px;color:#a9c1d7!important;font-size:9px;opacity:.68;text-decoration:none;}
+.cinematic-dashboard .player-photo-credit:hover{opacity:1;text-decoration:underline;}
+.cinematic-dashboard .stat-card,.cinematic-dashboard .game-card,.cinematic-dashboard .ranking-panel,.cinematic-dashboard .recent-panel{will-change:auto;transition:transform .24s cubic-bezier(.2,.8,.2,1),border-color .24s ease,box-shadow .24s ease;}
+.cinematic-dashboard .game-card{overflow:hidden;position:relative;}
+.cinematic-dashboard .game-card:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(110deg,transparent 20%,#ffffff10 48%,transparent 75%);transform:translateX(-160%);transition:transform .6s ease;}
+.cinematic-dashboard .ranking-panel .mini-player{transition:transform .2s ease,background .2s ease;}
+@media(hover:hover) and (pointer:fine){
+ .cinematic-dashboard .game-card:hover{transform:translateY(-5px);border-color:#67b7ff!important;box-shadow:0 14px 36px #0008,0 0 23px #348de52b;}
+ .cinematic-dashboard .game-card:hover:after{transform:translateX(160%);}
+ .cinematic-dashboard .stat-card:hover{transform:translateY(-3px);border-color:#ff506d!important;box-shadow:0 9px 28px #e83d4a1c;}
+ .cinematic-dashboard .ranking-panel .mini-player:hover{transform:translateX(3px);background:#15314c!important;}
+ .cinematic-dashboard .panel-link:hover{transform:translateY(-2px);border-color:#7ac2ff!important;}
+}
+.cinematic-dashboard .game-card:active,.cinematic-dashboard .panel-link:active,.cinematic-dashboard .button:active{transform:scale(.985);}
+.cinematic-dashboard .game-card .team-mark,.cinematic-dashboard .game-card .team-badge,.cinematic-dashboard .picked-team .team-mark,.cinematic-dashboard .recent-pick .team-mark{background:#153c64!important;border:1px solid #3d80ba!important;color:#eaf6ff!important;}
+.cinematic-dashboard .game-card .team-mark *, .cinematic-dashboard .game-card .team-badge *, .cinematic-dashboard .picked-team .team-mark *{color:#f1f8ff!important;}
+.cinematic-dashboard .game-card .team-choice.used{background:#3b192e!important;}
+.cinematic-dashboard .game-card .team-choice.selected{background:#173b63!important;}
+.cinematic-dashboard .recent-pick,.cinematic-dashboard .mini-player{color:#d8ebff!important;}
+.cinematic-dashboard .ranking-panel .rank-crown{color:#ff536b!important;}
+@media(max-width:1000px){.cinematic-dashboard .real-football-player{width:54%;opacity:.74}.cinematic-dashboard .stadium-banner{min-height:220px}.cinematic-dashboard .stadium-banner-copy{max-width:85%;}}
+@media(max-width:620px){.cinematic-dashboard .stadium-banner{min-height:170px}.cinematic-dashboard .real-football-player{width:68%;opacity:.42;background-position:center 30%}.cinematic-dashboard .stadium-banner h1{font-size:clamp(2.1rem,8vw,3.4rem);white-space:normal}.cinematic-dashboard .stadium-banner-copy{max-width:100%}.cinematic-dashboard .player-photo-credit{font-size:8px}}
+@media(prefers-reduced-motion:reduce){.cinematic-dashboard .real-football-player,.cinematic-dashboard .stadium-banner-copy,.cinematic-dashboard .stadium-stands,.cinematic-dashboard .game-card,.cinematic-dashboard .stat-card,.cinematic-dashboard .ranking-panel .mini-player{transform:none!important;transition:none!important}.cinematic-dashboard .game-card:after{display:none!important}}
