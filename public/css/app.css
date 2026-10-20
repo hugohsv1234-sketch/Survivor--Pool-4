@@ -4498,3 +4498,66 @@ dialog::backdrop{background:#020713c8;backdrop-filter:blur(7px)}
 @media(prefers-reduced-motion:reduce){
  .pool-pick-rate-track i,.pool-pick-rate-track b{transition:none!important;}
 }
+
+
+/* Public ticket percentages: NOT moneyline prices, not win probability. */
+.public-bets-widget{
+  display:flex;flex-direction:column;gap:9px;
+  padding:12px 13px!important;
+  border-top:1px solid #3a6d98;
+  background:linear-gradient(135deg,#0b2540,#091b30)!important;
+  min-width:0;
+}
+.public-bets-heading,.public-bets-sides{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+}
+.public-bets-heading strong,.public-bets-widget.empty>span{
+  color:#dcaabf!important;
+  font-size:.68rem!important;font-weight:850!important;letter-spacing:.09em;
+}
+.public-bets-heading small,.public-bets-widget.empty>small{
+  font-size:.65rem!important;color:#9bc9f0!important;text-align:right;
+}
+.public-bets-sides>span{
+  display:flex;flex-direction:column;gap:1px;min-width:0;
+  color:#e6bbce!important;
+}
+.public-bets-sides>span:last-child{text-align:right;align-items:flex-end;}
+.public-bets-sides b{
+  font-size:.8rem!important;color:#a9cbea!important;font-weight:700!important;
+}
+.public-bets-sides strong{
+  font-size:clamp(1.12rem,1.4vw,1.5rem)!important;
+  font-weight:900!important;color:#f1c0d1!important;
+  font-variant-numeric:tabular-nums!important;
+}
+.public-bets-sides .most strong{color:#a4d8ff!important;}
+.public-bets-bar{
+  display:flex;height:11px;border-radius:999px;
+  background:#142f4c;overflow:hidden;
+  box-shadow:0 2px 7px #0005,inset 0 1px 3px #020716;
+}
+.public-bets-bar i,.public-bets-bar b{
+  flex:0 0 auto;height:100%;display:block;
+  transition:width .45s cubic-bezier(.2,.8,.2,1);
+}
+.public-bets-bar i{background:linear-gradient(90deg,#378bcf,#77caff);}
+.public-bets-bar b{background:linear-gradient(90deg,#fa5879,#c93257);}
+.public-bets-source{
+  color:#a5bbd7!important;font-size:.62rem!important;line-height:1.4!important;
+}
+.public-bets-source a{
+  color:#83beff!important;text-decoration:underline!important;
+  text-underline-offset:2px;
+}
+.public-bets-widget.empty{
+  flex-direction:row;align-items:center;justify-content:space-between;
+  gap:8px;min-height:40px;
+}
+@media(max-width:620px){
+  .public-bets-widget{padding:11px 10px!important;}
+  .public-bets-sides strong{font-size:1.12rem!important;}
+}
+@media(prefers-reduced-motion:reduce){
+  .public-bets-bar i,.public-bets-bar b{transition:none!important;}
+}
