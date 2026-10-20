@@ -15,7 +15,7 @@ const sandbox = {console,Intl,Date,performance:{now:()=>100},AbortSignal,AbortCo
   setInterval(){},setTimeout(){},clearTimeout(){},
   matchMedia:()=>({matches:false}),
   location:{hash:'#dashboard',protocol:'http:'},navigator:{},
-  window:{addEventListener(){},scrollTo(){}},
+  window:{addEventListener(){},scrollTo(){},matchMedia:()=>({matches:false})},
   document:{title:'',hidden:false,
     querySelector:s=>elements[s]||null,querySelectorAll:()=>[],
     addEventListener:(name,fn)=>events.set(name,fn),
