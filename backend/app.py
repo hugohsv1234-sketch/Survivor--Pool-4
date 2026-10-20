@@ -16,7 +16,7 @@ from .store import Store
 from .demo import week_name
 
 
-HISTORICAL_SHEET = "Frank|JAX-CLE:g|TB-CLE:r|SF-ARI:g|MIN-MIA:g|DAL-TB:r|IND-TEN:p\nJochen|CHI-CAR:g|CAR-ATL:g|DET-NYJ:g|MIN-MIA:g|LV-NE:r|IND-TEN:p\nSven|LV-MIA:g|TB-CLE:r|NYG-TEN:g|MIN-MIA:g|JAX-PHI:g|LAR-ARI:p\nLiche|LAC-ARI:r|TB-CLE:r|NO-LV:r|MIN-MIA:g|-:p|IND-TEN:p\nMomo|LAC-ARI:r|TB-CLE:r|GB-ATL:r|MIN-MIA:g|DAL-TB:r|IND-TEN:p\nLulle|JAX-CLE:g|DAL-WAS:g|GB-ATL:r|MIN-MIA:g|PIT-IND:g|LAR-ARI:p\nLetti|CHI-CAR:g|DAL-WAS:g|NO-LV:r|MIN-MIA:g|DAL-TB:r|IND-TEN:p\nAlec|LAC-ARI:r|GB-NYJ:g|MIN-TB:g|BAL-TEN:g|DAL-TB:r|CAR-PHI:p\nFlo|LAC-ARI:r|TB-CLE:r|GB-ATL:r|DET-CAR:r|DAL-TB:r|IND-TEN:p\nSascha|LAC-ARI:r|TB-CLE:r|CAR-CLE:r|DET-CAR:r|DAL-TB:r|NE-NYJ:p\nMarkus|JAX-CLE:g|CAR-ATL:g|GB-ATL:r|BAL-TEN:g|HOU-TEN:g|IND-TEN:p\nMax|PIT-ATL:g|TB-CLE:r|NO-LV:r|GB-TB:g|DEN-LAC:g|IND-TEN:p\nConner|JAX-CLE:g|TB-CLE:r|GB-ATL:r|BAL-TEN:g|DET-ARI:g|NE-NYJ:p\nBertram|JAX-CLE:g|TB-CLE:r|GB-ATL:r|DET-CAR:r|DAL-TB:r|IND-TEN:p\nPatrick|CHI-CAR:g|CAR-ATL:g|GB-ATL:r|NO-ATL:r|CLE-NYJ:r|IND-TEN:p"
+HISTORICAL_SHEET = "Frank|JAX-CLE:g|TB-CLE:r|SF-ARI:g|MIN-MIA:g|DAL-TB:r|IND-TEN:r\nJochen|CHI-CAR:g|CAR-ATL:g|DET-NYJ:g|MIN-MIA:g|LV-NE:r|IND-TEN:r\nSven|LV-MIA:g|TB-CLE:r|NYG-TEN:g|MIN-MIA:g|JAX-PHI:g|LAR-ARI:r\nLiche|LAC-ARI:r|TB-CLE:r|NO-LV:r|MIN-MIA:g|-:p|IND-TEN:r\nMomo|LAC-ARI:r|TB-CLE:r|GB-ATL:r|MIN-MIA:g|DAL-TB:r|IND-TEN:r\nLulle|JAX-CLE:g|DAL-WAS:g|GB-ATL:r|MIN-MIA:g|PIT-IND:g|LAR-ARI:r\nLetti|CHI-CAR:g|DAL-WAS:g|NO-LV:r|MIN-MIA:g|DAL-TB:r|IND-TEN:r\nAlec|LAC-ARI:r|GB-NYJ:g|MIN-TB:g|BAL-TEN:g|DAL-TB:r|CAR-PHI:g\nFlo|LAC-ARI:r|TB-CLE:r|GB-ATL:r|DET-CAR:r|DAL-TB:r|IND-TEN:r\nSascha|LAC-ARI:r|TB-CLE:r|CAR-CLE:r|DET-CAR:r|DAL-TB:r|NE-NYJ:g\nMarkus|JAX-CLE:g|CAR-ATL:g|GB-ATL:r|BAL-TEN:g|HOU-TEN:g|IND-TEN:r\nMax|PIT-ATL:g|TB-CLE:r|NO-LV:r|GB-TB:g|DEN-LAC:g|IND-TEN:r\nConner|JAX-CLE:g|TB-CLE:r|GB-ATL:r|BAL-TEN:g|DET-ARI:g|NE-NYJ:g\nBertram|JAX-CLE:g|TB-CLE:r|GB-ATL:r|DET-CAR:r|DAL-TB:r|IND-TEN:r\nPatrick|CHI-CAR:g|CAR-ATL:g|GB-ATL:r|NO-ATL:r|CLE-NYJ:r|IND-TEN:r"
 
 class App:
     def __init__(self, db_path, public_dir, demo_mode=True, pool_password=None,
@@ -323,6 +323,14 @@ class App:
                     continue
                 db.execute("INSERT INTO historical_picks(user_id,season,week,matchup,result) VALUES(?,?,?,?,?) ON CONFLICT(user_id,season,week) DO NOTHING",
                            (ids[0], settings["season"], week, matchup, {"g":"win","r":"loss","p":"pending"}[status]))
+                # Week 6 was formerly entered as "pending"; the supplied
+                # spreadsheet now has final red/green results. Update ONLY
+                # unchanged pending historical rows for unique exact-name
+                # matches and identical matchups. Never modify actual picks
+                # or already-decided historical results.
+                if week == 6 and status in ("g", "r"):
+                    db.execute("UPDATE historical_picks SET result=? WHERE user_id=? AND season=? AND week=6 AND matchup=? AND result='pending'",
+                               ("win" if status == "g" else "loss", ids[0], settings["season"], matchup))
         history = [dict(h) for h in db.execute("SELECT * FROM historical_picks WHERE season=? ORDER BY week", (settings["season"],))]
         picks = [dict(p) for p in db.execute("SELECT * FROM picks WHERE season=? ORDER BY week", (settings["season"],))]
         public = []
@@ -333,6 +341,37 @@ class App:
             pick["locked"] = pick["locked_at"] is not None or started(game, now)
             if pick["user_id"] == user["id"] or pick["locked"]:
                 public.append(pick)
+
+        # Free pool-only pick distribution, NOT bookmaker betting odds.
+        # Only publish a distribution once that game's kickoff has occurred:
+        # no counts or choices from still-secret early picks can leak.
+        available_games = {gid: g for gid, g in games.items() if started(g, now)}
+        totals = {gid: {g["away"]: 0, g["home"]: 0}
+                  for gid, g in available_games.items()}
+        official_weeks = {(p["user_id"], p["week"]) for p in picks}
+        for pick in picks:
+            if pick["game_id"] in totals and pick["team"] in totals[pick["game_id"]]:
+                totals[pick["game_id"]][pick["team"]] += 1
+        for entry in history:
+            # An official pick always takes precedence over imported history.
+            if (entry["user_id"], entry["week"]) in official_weeks:
+                continue
+            try:
+                selected, against = entry["matchup"].split("-", 1)
+            except ValueError:
+                continue
+            for gid, g in available_games.items():
+                if entry["week"] == g["week"] and selected in (g["away"], g["home"]) and set((selected, against)) == set((g["away"], g["home"])):
+                    totals[gid][selected] += 1
+                    break
+        pick_rates = {}
+        for gid, counts in totals.items():
+            total = sum(counts.values())
+            if total:
+                pick_rates[gid] = {"total": total,
+                                   "percent": {team: round(count * 100 / total)
+                                               for team, count in counts.items()},
+                                   "counts": counts}
         for player in users:
             own = [p for p in picks if p["user_id"] == player["id"]]
             player["stats"] = self.player_stats(player, own, games, settings, now)
@@ -345,7 +384,7 @@ class App:
             player["stats"]["rate"] = round(player["stats"]["wins"] / evaluated * 100) if evaluated else 0
         users.sort(key=lambda u: (-u["stats"]["wins"], u["display_name"].casefold(), u["username"]))
         user = next(u for u in users if u["id"] == user["id"])
-        return {"me": user, "players": users, "picks": public, "historical_picks": history, "games": list(games.values()),
+        return {"me": user, "players": users, "picks": public, "historical_picks": history, "pick_rates": pick_rates, "games": list(games.values()),
                 "teams": [dict(t) for t in db.execute("SELECT * FROM teams ORDER BY city,name")],
                 "weeks": [{"number": n, "name": week_name(n)} for n in range(1, 23)],
                 "season": settings["season"], "current_week": settings["current_week"], "now": now,
