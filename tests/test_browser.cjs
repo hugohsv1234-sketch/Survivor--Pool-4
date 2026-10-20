@@ -56,7 +56,7 @@ async function testSize(browser, config) {
     assert.equal(await page.locator('.stat-card').count(),4);
     await snapshot(page,name+'-dashboard');
 
-    const nav=(name.startsWith('phone')?'.bottom-nav':'.sidebar .nav-link');
+    const nav=await page.locator('.bottom-nav a[href="#games"]').isVisible() ? '.bottom-nav' : '.sidebar .nav-link';
     await page.locator(nav+'[href="#games"]').click();
     await visible(page,'.games-grid.full');
     assert.ok(await page.locator('.games-grid.full .game-card').count()>0);
