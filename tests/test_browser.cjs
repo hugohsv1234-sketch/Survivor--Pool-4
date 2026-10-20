@@ -83,7 +83,7 @@ async function testSize(browser, config) {
     if(await trigger.isVisible()) {
       await trigger.click();
       await visible(page,'dialog[open]');
-      await page.locator('dialog [data-action="close-modal"]').click();
+      await page.locator('dialog [data-action="close-modal"]').first().click();
     }
     assert.deepEqual(errors,[],name+' had client-side JavaScript errors');
     console.log('PASS',name,width+'×'+height,'reduce motion:',reduced);
