@@ -331,7 +331,7 @@ class App:
                 if week == 6 and status in ("g", "r"):
                     db.execute("UPDATE historical_picks SET result=? WHERE user_id=? AND season=? AND week=6 AND matchup=? AND result='pending'",
                                ("win" if status == "g" else "loss", ids[0], settings["season"], matchup))
-        history = [dict(h) for h in db.execute("SELECT * FROM historical_picks WHERE season=? ORDER BY week", (settings["season"],))]
+        history = [dict(h) for h in db.execute("SELECT * FROM historical_picks WHERE season=? AND week<=? ORDER BY week", (settings["season"], settings["current_week"]))]
         picks = [dict(p) for p in db.execute("SELECT * FROM picks WHERE season=? ORDER BY week", (settings["season"],))]
         public = []
         for pick in picks:
@@ -380,6 +380,8 @@ class App:
             player["stats"]["wins"] += sum(h["result"] == "win" for h in extra)
             player["stats"]["losses"] += sum(h["result"] == "loss" for h in extra)
             player["stats"]["total"] += len(extra)
+            if any(h["result"] == "loss" for h in extra):
+                player["stats"]["survivor"] = False
             evaluated = player["stats"]["wins"] + player["stats"]["losses"]
             player["stats"]["rate"] = round(player["stats"]["wins"] / evaluated * 100) if evaluated else 0
         users.sort(key=lambda u: (-u["stats"]["wins"], u["display_name"].casefold(), u["username"]))
