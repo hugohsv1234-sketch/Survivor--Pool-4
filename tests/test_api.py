@@ -47,7 +47,8 @@ class Client:
         return meta["status"], result, meta["headers"]
 
     def gate(self):
-        return self.call("/api/gate", {"password": "NURDERHSV"})
+        # Legacy helper name in tests; app no longer requires a pool password.
+        return self.call("/api/session")
 
     def login(self, name="max"):
         self.gate()
@@ -134,11 +135,11 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(result["me"]["stats"]["losses"], 0)
         self.assertTrue(any(p["week"] == 6 and p["user_id"] == 1 for p in result["picks"]))
 
-    def test_gate_authentication_and_logout_boundary(self):
+    def test_session_authentication_and_logout_boundary(self):
         self.assertEqual(self.client.call("/api/state")[0], 401)
         self.assertEqual(self.client.call("/api/login", {"username":"max","password":"Survivor2026!"})[0], 401)
-        self.assertEqual(self.client.call("/api/gate", {"password":"wrong"})[0], 401)
         self.assertEqual(self.client.gate()[0], 200)
+        self.assertEqual(self.client.call("/api/login", {"username":"max","password":"wrong"})[0], 401)
         self.assertEqual(self.client.call("/api/state")[0], 401)
         old = self.client.cookie
         self.assertEqual(self.client.call("/api/login", {"username":"MAX","password":"Survivor2026!"})[0], 200)
@@ -158,7 +159,7 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(self.client.call("/api/register", {**fields,"confirmation":"different"})[0], 400)
         self.assertEqual(self.client.call("/api/register", {**fields,"username":"MaX"})[0], 409)
         self.assertEqual(self.client.call("/api/register", {**fields,"username":"<script>"})[0], 400)
-        self.assertEqual(self.client.call("/api/register", {**fields,"password":"short","confirmation":"short"})[0], 400)
+        self.assertEqual(self.client.call("/api/register", {**fields,"password":"four","confirmation":"four"})[0], 400)
         self.assertEqual(self.client.call("/api/register", fields)[0], 200)
         state = self.client.state()
         self.assertEqual(state["me"]["username"], "new_player")
@@ -308,17 +309,18 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(self.client.call("/api/state")[2]["Cache-Control"],"no-store")
 
     def test_malformed_requests_and_oversize(self):
-        self.assertEqual(self.client.call("/api/gate",raw=b'{broken')[0],400)
-        self.assertEqual(self.client.call("/api/gate",raw=b'[]')[0],400)
-        self.assertEqual(self.client.call("/api/gate",raw=b'x'*16385)[0],413)
+        self.assertEqual(self.client.call("/api/login",raw=b'{broken')[0],400)
+        self.assertEqual(self.client.call("/api/login",raw=b'[]')[0],400)
+        self.assertEqual(self.client.call("/api/login",raw=b'x'*16385)[0],413)
         self.assertEqual(self.client.call("/api/state",method="PUT")[0],405)
 
     def test_rate_limiter_persists_failed_attempts(self):
         # Seed 29 attempts instead of spending several seconds hashing failures.
+        self.client.gate()
         with self.app.store.transaction() as db:
-            db.execute("INSERT INTO rate_limits VALUES(?,29,?)",("/api/gate:127.0.0.1",time.time()+900))
-        self.assertEqual(self.client.call("/api/gate",{"password":"wrong"})[0],401)
-        self.assertEqual(self.client.gate()[0],429)
+            db.execute("INSERT INTO rate_limits VALUES(?,29,?)",("/api/login:127.0.0.1",time.time()+900))
+        self.assertEqual(self.client.call("/api/login",{"username":"max","password":"wrong"})[0],401)
+        self.assertEqual(self.client.call("/api/login",{"username":"max","password":"Survivor2026!"})[0],429)
 
     def test_true_ticket_percentages_are_not_bookmaker_prices(self):
         html = """
@@ -380,7 +382,7 @@ class ApiTests(unittest.TestCase):
         production=App(Path(self.temp.name)/"prod.sqlite3",ROOT/"public",demo_mode=False,
                        pool_password_hash=self.pool_hash,origins=("https://localhost:8000",),secure=True)
         client=Client(production)
-        response=client.call("/api/gate",{"password":"NURDERHSV"},origin="https://localhost:8000")
+        response=client.call("/api/session",origin="https://localhost:8000")
         self.assertIn("; Secure",response[2]["Set-Cookie"])
         with production.store.connect() as db:
             self.assertEqual(db.execute("SELECT COUNT(*) FROM users").fetchone()[0],0)
