@@ -59,7 +59,7 @@ async function testSize(browser, config) {
       name+' stat cards clipped on right by '+(statsBox.x+statsBox.width-width)+'px');
     await snapshot(page,name+'-dashboard');
 
-    const nav=await page.locator('.bottom-nav a[href="#games"]').isVisible() ? '.bottom-nav' : '.sidebar .nav-link';
+    const nav=await page.locator('.bottom-nav a[href="#games"]').isVisible() ? '.bottom-nav a' : '.sidebar .nav-link';
     await page.locator(nav+'[href="#games"]').click();
     await visible(page,'.games-grid.full');
     assert.ok(await page.locator('.games-grid.full .game-card').count()>0);
