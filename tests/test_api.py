@@ -369,7 +369,7 @@ class ApiTests(unittest.TestCase):
         self.assertNotIn("public_bet_percent", stale)
 
     def test_public_assets_and_pwa_cache_exclusion(self):
-        for path in ("/","/css/app.css","/js/app.js","/manifest.json","/service-worker.js","/icons/icon-192.png","/icons/icon-512.png"):
+        for path in ("/","/css/app.css","/js/app.js","/js/immersive-motion.js","/manifest.json","/service-worker.js","/icons/paetzold-silhouette.svg","/icons/paetzold-player.png","/icons/icon-192.png","/icons/icon-512.png"):
             self.assertEqual(self.client.call(path)[0],200,path)
         manifest=self.client.call("/manifest.json")[1]
         self.assertEqual(manifest["display"],"standalone")

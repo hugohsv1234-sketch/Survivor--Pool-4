@@ -16,7 +16,14 @@
     '.leaderboard-panel .leaderboard-row',
     '.season-panel .season-table',
     '.cinematic-dashboard .broadcast-pick-title',
-    '.cinematic-dashboard .section-heading'
+    '.cinematic-dashboard .section-heading',
+    '.cinematic-dashboard .public-bets-widget',
+    '.cinematic-dashboard .pool-pick-rate',
+    '.game-card',
+    '.leaderboard-panel .leaderboard-row',
+    '.season-panel .inventory-team',
+    '.profile-grid .history-pick',
+    '.page-content .page-heading'
   ].join(',');
   const seen = new WeakSet();
   let observer;
@@ -29,7 +36,7 @@
         item.classList.add('motion-visible');
         io.unobserve(item);
       }
-    }, {rootMargin:'0px 0px 56px 0px',threshold:0.09});
+    }, {rootMargin:'0px 0px 70px 0px',threshold:0.035});
   }
   const scan = () => {
     if (!observer || reduce?.matches) return;
@@ -64,15 +71,25 @@
     if (!frame) frame=window.requestAnimationFrame(update);
   };
   document.addEventListener('pointermove',event=>{
-    if (!fine?.matches || reduce?.matches) return;
+    if (reduce?.matches) return;
     const hero=event.target?.closest?.('.paetzold-stadium-hero');
     if (!hero) return;
+    const desktop=fine?.matches && event.pointerType!=='touch';
+    const touch=event.pointerType==='touch';
+    if (!desktop && !touch) return;
     activeHero=hero;
     const rect=hero.getBoundingClientRect();
-    motion.x=Math.max(-1,Math.min(1,(event.clientX-rect.left)/Math.max(1,rect.width)*2-1));
-    motion.y=Math.max(-1,Math.min(1,(event.clientY-rect.top)/Math.max(1,rect.height)*2-1));
+    const strength=touch ? .34 : 1;
+    motion.x=Math.max(-1,Math.min(1,(event.clientX-rect.left)/Math.max(1,rect.width)*2-1))*strength;
+    motion.y=Math.max(-1,Math.min(1,(event.clientY-rect.top)/Math.max(1,rect.height)*2-1))*strength;
     schedule();
   },{passive:true});
+  const stopTouch=event=>{
+    if (event.pointerType!=='touch') return;
+    motion.x=0;motion.y=0;schedule();
+  };
+  document.addEventListener('pointerup',stopTouch,{passive:true});
+  document.addEventListener('pointercancel',stopTouch,{passive:true});
   document.addEventListener('pointerout',event=>{
     const hero=event.target?.closest?.('.paetzold-stadium-hero');
     if (!hero || hero.contains(event.relatedTarget)) return;

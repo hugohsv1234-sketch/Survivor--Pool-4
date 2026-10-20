@@ -202,6 +202,34 @@ test('motion assets are decorative, locally served and reduced-motion safe',()=>
   assert.match(css,/motion-reveal-item/);
   assert.match(css,/prefers-reduced-motion:reduce/);
 });
+test('original photo is clipped to a real vector player silhouette, not screen blended',()=>{
+  const css=fs.readFileSync(path.join(root,'public/css/app.css'),'utf8');
+  const svg=fs.readFileSync(path.join(root,'public/icons/paetzold-silhouette.svg'),'utf8');
+  const start=css.lastIndexOf('SURVIVOR POOL • PREMIUM MOTION / TRANSPARENT PLAYER');
+  assert.ok(start>0,'the final cutout overrides should be at the bottom of CSS');
+  const overrides=css.slice(start);
+  assert.match(overrides,/paetzold-silhouette\.svg/);
+  assert.match(overrides,/mask-size:contain!important/);
+  assert.match(overrides,/mix-blend-mode:normal!important/);
+  assert.match(overrides,/paetzold-player-front/);
+  assert.match(overrides,/clip-path:polygon/);
+  assert.match(overrides,/prefers-reduced-motion:reduce/);
+  assert.match(svg,/viewBox="0 0 1024 1536"/);
+  assert.match(svg,/<path fill="#fff" d="M/);
+  assert.ok(svg.length>2000 && svg.length<10000,'keep cutout vector compact');
+  const sw=fs.readFileSync(path.join(root,'public/service-worker.js'),'utf8');
+  assert.match(sw,/paetzold-silhouette\.svg/);
+  assert.doesNotMatch(overrides,/background-image:url\('https?:\/\//);
+});
+test('touch parallax uses passive events, handles touch end, and never interferes with pool picks',()=>{
+  const js=fs.readFileSync(path.join(root,'public/js/immersive-motion.js'),'utf8');
+  assert.match(js,/pointerType==='touch'/);
+  assert.match(js,/pointercancel/);
+  assert.match(js,/pointerup/);
+  assert.match(js,/prefers-reduced-motion: reduce/);
+  assert.doesNotMatch(js,/preventDefault\(|fetch\(|\/api\/pick/);
+  assert.doesNotThrow(()=>new Function(js));
+});
 test('public frontend contains neither shared password nor private hashes',()=>{
   const js=fs.readFileSync(path.join(root,'public/js/app.js'),'utf8');
   assert.doesNotMatch(js,/NURDERHSV|scrypt\$/);
