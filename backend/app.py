@@ -305,6 +305,28 @@ class App:
 
     def snapshot(self, db, user, settings, now):
         games = {g["id"]: dict(g) for g in db.execute("SELECT * FROM games WHERE season=? ORDER BY week,kickoff,id", (settings["season"],))}
+        # External public Moneyline ticket percentages, not pool picks and
+        # never an odds-based estimate. Ignore unavailable or stale entries.
+        published_splits = settings.get("public_bet_splits") or {}
+        if isinstance(published_splits, dict):
+            for gid, game in games.items():
+                split = published_splits.get(gid)
+                if not isinstance(split, dict):
+                    continue
+                updated_at = split.get("updated_at")
+                values = split.get("percent")
+                if not isinstance(updated_at, (int, float)) or not 0 <= now - updated_at < 5400:
+                    continue
+                if not isinstance(values, dict):
+                    continue
+                away, home = values.get(game["away"]), values.get(game["home"])
+                if (isinstance(away, int) and not isinstance(away, bool)
+                        and isinstance(home, int) and not isinstance(home, bool)
+                        and 0 <= away <= 100 and 0 <= home <= 100
+                        and abs(away + home - 100) <= 2):
+                    game["public_bet_percent"] = {game["away"]: away, game["home"]: home}
+                    game["public_bet_source"] = "DraftKings"
+                    game["public_bet_updated_at"] = updated_at
         users = [dict(u) for u in db.execute("SELECT id,username,display_name,role,joined_week FROM users")]
         images = {row["user_id"]: row["image_data"] for row in db.execute("SELECT user_id,image_data FROM profile_images")}
         for player in users:
