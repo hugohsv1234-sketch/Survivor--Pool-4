@@ -67,7 +67,21 @@ async function testSize(browser, config) {
     assert.ok(gamesBox && gamesBox.x+gamesBox.width<=width+2,
       name+' games grid clipped on right by '+(gamesBox.x+gamesBox.width-width)+'px');
     await page.evaluate(()=>window.scrollTo(0,Math.min(600,document.body.scrollHeight)));
-    await page.waitForTimeout(400);
+    await page.waitForTimeout(720);
+    // Regression: offscreen reveal animations must NOT hide all cards
+    // after a quick mobile swipe. The screenshot should never be blank.
+    const onScreen=await page.evaluate(()=>{
+      const cards=[...document.querySelectorAll('.games-grid.full .game-card')];
+      const inView=cards.filter(el=>{
+        const r=el.getBoundingClientRect();
+        return r.bottom>65 && r.top<innerHeight-70;
+      });
+      return {count:inView.length, visible:inView.filter(el=>
+        Number.parseFloat(getComputedStyle(el).opacity)>.90 &&
+        getComputedStyle(el).visibility!=='hidden').length};
+    });
+    assert.ok(onScreen.count>0 && onScreen.visible>0,
+      name+' shows blank games after swipe: '+JSON.stringify(onScreen));
     await snapshot(page,name+'-games');
 
     await page.locator(nav+'[href="#leaderboard"]').click();
