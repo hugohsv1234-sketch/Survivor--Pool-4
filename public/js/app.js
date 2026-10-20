@@ -311,6 +311,54 @@
       if(hero&&!hero.contains(event.relatedTarget)){hero.style.removeProperty('--mouse-x');hero.style.removeProperty('--mouse-y');}
     },{passive:true});
   }
+  // Motion system: all events are delegated so navigation and re-rendering keep working.
+  // Respect reduced-motion and never interfere with the pick or login actions.
+  const motionAllowed = window.matchMedia('(prefers-reduced-motion: no-preference)');
+  const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
+  const motionTarget = '.game-card, .stat-card, .inventory-team, .ranking-panel, .history-pick, .leaderboard-row';
+  let motionFrame = 0, motionElement = null, motionPoint = null;
+  document.addEventListener('pointermove', event => {
+    if (!motionAllowed.matches || !finePointer.matches) return;
+    const target = event.target.closest(motionTarget);
+    if (!target) return;
+    motionElement = target;
+    motionPoint = {x:event.clientX,y:event.clientY};
+    if (motionFrame) return;
+    motionFrame = requestAnimationFrame(() => {
+      motionFrame = 0;
+      const element = motionElement, point = motionPoint;
+      if (!element?.isConnected || !point) return;
+      const rect = element.getBoundingClientRect();
+      const x = Math.max(-1,Math.min(1,(point.x-rect.left)/rect.width*2-1));
+      const y = Math.max(-1,Math.min(1,(point.y-rect.top)/rect.height*2-1));
+      element.style.setProperty('--tilt-x',(-y*2.2).toFixed(2)+'deg');
+      element.style.setProperty('--tilt-y',(x*2.2).toFixed(2)+'deg');
+      element.style.setProperty('--spot-x',((x+1)*50).toFixed(1)+'%');
+      element.style.setProperty('--spot-y',((y+1)*50).toFixed(1)+'%');
+    });
+  }, {passive:true});
+  document.addEventListener('pointerout', event => {
+    const target = event.target.closest(motionTarget);
+    if (!target || target.contains(event.relatedTarget)) return;
+    target.style.removeProperty('--tilt-x');
+    target.style.removeProperty('--tilt-y');
+    target.style.removeProperty('--spot-x');
+    target.style.removeProperty('--spot-y');
+  }, {passive:true});
+  document.addEventListener('pointerdown', event => {
+    if (!motionAllowed.matches || event.button > 0) return;
+    const target = event.target.closest('button, .nav-link, .game-card, .stat-card, .inventory-team, .panel-link, .sidebar-user');
+    if (!target || target.matches(':disabled,[aria-disabled="true"]')) return;
+    const bounds = target.getBoundingClientRect();
+    const ripple = document.createElement('span');
+    ripple.className = 'motion-tap-ripple';
+    ripple.style.left = (event.clientX - bounds.left) + 'px';
+    ripple.style.top = (event.clientY - bounds.top) + 'px';
+    ripple.style.width = ripple.style.height = Math.max(bounds.width,bounds.height)*2 + 'px';
+    // Keep existing event handlers and focus behavior unchanged.
+    target.appendChild(ripple);
+    ripple.addEventListener('animationend',()=>ripple.remove(),{once:true});
+  }, {passive:true});
   window.addEventListener('hashchange',()=>{const route=location.hash.slice(1);state.route=navigation.some(n=>n[0]===route)?route:'dashboard';if(state.data){closeModal();render();window.scrollTo({top:0,behavior:'instant'});}});
   window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();state.prompt=event;});
   window.addEventListener('appinstalled',()=>{state.installed=true;state.prompt=null;if(state.data)render();toast('Survivor Pool wurde installiert.');});
