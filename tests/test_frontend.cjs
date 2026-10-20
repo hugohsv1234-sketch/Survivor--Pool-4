@@ -95,6 +95,18 @@ test('optional WebMCP registration, validation and state readback',()=>{
   assert.ok(elements['#modal'].open);assert.equal(t.state.data.picks.length,before);
   assert.throws(()=>stage.execute({game_id:'bad',team:'BAL'}));assert.throws(()=>read.execute({injected:true}));
 });
+test('game cards show privacy-safe pool tip percentages after kickoff',()=>{
+  const copy=structuredClone(snapshot);
+  copy.pick_rates={'d2026-5-0':{total:4,percent:{BAL:75,CIN:25},counts:{BAL:3,CIN:1}}};
+  t.receive(copy);t.state.route='dashboard';t.render();
+  const html=elements['#app'].innerHTML;
+  assert.match(html,/POOL-TIPPQUOTEN/);
+  assert.match(html,/75%/);
+  assert.match(html,/25%/);
+  assert.match(html,/4 Tipps/);
+  assert.match(html,/Nach Spielbeginn sichtbar/);
+  t.receive(snapshot);
+});
 test('public frontend contains neither shared password nor private hashes',()=>{
   const js=fs.readFileSync(path.join(root,'public/js/app.js'),'utf8');
   assert.doesNotMatch(js,/NURDERHSV|scrypt\$/);
