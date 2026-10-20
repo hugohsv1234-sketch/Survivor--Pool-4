@@ -107,6 +107,22 @@ test('game cards show privacy-safe pool tip percentages after kickoff',()=>{
   assert.match(html,/Nach Spielbeginn sichtbar/);
   t.receive(snapshot);
 });
+test('external real betting-ticket percentages show separately from pool stats',()=>{
+  const copy=structuredClone(snapshot);
+  const game=copy.games.find(g=>g.week===5);
+  game.public_bet_percent={[game.away]:65,[game.home]:35};
+  game.public_bet_source='DraftKings';
+  game.public_bet_updated_at=copy.now;
+  t.receive(copy);t.state.week=5;t.state.route='games';t.render();
+  const html=elements['#app'].innerHTML;
+  assert.match(html,/SO WIRD GEWETTET/);
+  assert.match(html,/65%/);
+  assert.match(html,/35%/);
+  assert.match(html,/DraftKings/);
+  assert.match(html,/POOL-TIPPQUOTEN/);
+  assert.doesNotMatch(html,/ESPN-WETTQUOTEN|Handicap|Über \/ Unter|Moneyline · Dezimal/);
+  t.receive(snapshot);
+});
 test('public frontend contains neither shared password nor private hashes',()=>{
   const js=fs.readFileSync(path.join(root,'public/js/app.js'),'utf8');
   assert.doesNotMatch(js,/NURDERHSV|scrypt\$/);
