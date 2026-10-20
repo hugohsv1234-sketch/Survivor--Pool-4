@@ -739,3 +739,162 @@ button:focus-visible,a:focus-visible{
 @media (prefers-reduced-motion:no-preference) {
   .pm-reveal.pm-wait{opacity:1!important;visibility:visible!important;}
 }
+
+
+/* ======================================================================
+   NEW 49ERS DASHBOARD COVER — actual full-photo banner.
+   The user-supplied 49ers action photograph fills the complete banner.
+   Only the photo and its presentation change; headline stays ABOVE it.
+   No old transparent silhouette or duplicate foreground player.
+   ====================================================================== */
+.cinematic-dashboard .paetzold-stadium-hero{
+  position:relative!important;
+  isolation:isolate!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,32%) minmax(0,68%)!important;
+  overflow:hidden!important;
+  background:#08182a!important;
+  border:1px solid #487da9!important;
+  border-radius:18px!important;
+  box-shadow:0 24px 60px rgba(0,8,21,.43),inset 0 1px rgba(222,237,255,.09)!important;
+}
+.cinematic-dashboard .paetzold-stadium-hero .hero-player-area{
+  position:absolute!important;
+  inset:0!important;
+  top:0!important;right:0!important;bottom:0!important;left:0!important;
+  width:100%!important;
+  height:100%!important;
+  z-index:0!important;
+  grid-column:auto!important;
+  overflow:hidden!important;
+  background:transparent!important;
+  pointer-events:none!important;
+  -webkit-mask:none!important;
+  mask:none!important;
+}
+.cinematic-dashboard .paetzold-stadium-hero .paetzold-player{
+  display:block!important;
+  position:absolute!important;
+  inset:-3%!important;
+  top:-3%!important;right:-3%!important;bottom:-3%!important;left:-3%!important;
+  width:106%!important;
+  height:106%!important;
+  background-image:url('/icons/paetzold-player.png')!important;
+  background-color:#07182c!important;
+  background-repeat:no-repeat!important;
+  background-size:cover!important;
+  background-position:center top!important;
+  -webkit-mask-image:none!important;
+  mask-image:none!important;
+  -webkit-mask:none!important;
+  mask:none!important;
+  clip-path:none!important;
+  mix-blend-mode:normal!important;
+  opacity:1!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  filter:saturate(.93) contrast(1.05) brightness(.98)!important;
+  /* Existing premium controller controls these variables without new JS. */
+  transform:translate3d(
+    var(--hero-drift-x,0px),
+    calc(var(--hero-drift-y,0px) + var(--hero-scroll-y,0px)),
+    0
+  )!important;
+  transition:transform .8s cubic-bezier(.22,.72,.23,1)!important;
+  animation:none!important;
+  scale:1!important;
+  rotate:0deg!important;
+  pointer-events:none!important;
+}
+/* Soft dark-blue overlay keeps the lettering readable. It lives between
+   the photo and the text, never in front of interactive content. */
+.cinematic-dashboard .paetzold-stadium-hero .hero-player-area::after{
+  content:""!important;
+  position:absolute!important;
+  inset:0!important;
+  z-index:1!important;
+  display:block!important;
+  pointer-events:none!important;
+  background:
+    linear-gradient(90deg,
+      rgba(4,15,29,.07) 0%,
+      rgba(6,19,35,.22) 24%,
+      rgba(6,20,38,.54) 50%,
+      rgba(6,17,34,.78) 100%),
+    linear-gradient(0deg,rgba(5,15,29,.33),transparent 55%)!important;
+  opacity:1!important;
+  -webkit-backdrop-filter:none!important;
+  backdrop-filter:none!important;
+}
+/* The old double-drawn, cut-out player must not appear over the letters. */
+.cinematic-dashboard .paetzold-stadium-hero .paetzold-player-front{
+  display:none!important;
+  animation:none!important;
+}
+.cinematic-dashboard .paetzold-stadium-hero .stadium-banner-copy{
+  position:relative!important;
+  z-index:3!important;
+  grid-column:2!important;
+  grid-row:1!important;
+  align-self:center!important;
+  padding:22px clamp(14px,3vw,36px) 22px 0!important;
+  pointer-events:none!important;
+  transform:translate3d(var(--hero-heading-x,0px),0,0)!important;
+  transition:transform .8s cubic-bezier(.22,.72,.23,1)!important;
+}
+.cinematic-dashboard .paetzold-stadium-hero .stadium-banner-copy h1{
+  z-index:4!important;
+  position:relative!important;
+  text-shadow:0 4px 19px rgba(0,5,15,.85)!important;
+  max-width:100%!important;
+}
+.cinematic-dashboard .paetzold-stadium-hero .stadium-banner-copy h1 span{
+  color:#f5d6df!important;
+  -webkit-text-fill-color:#f5d6df!important;
+}
+.cinematic-dashboard .paetzold-stadium-hero .stadium-banner-copy h1 em{
+  color:#ff4169!important;
+  -webkit-text-fill-color:#ff4169!important;
+}
+.cinematic-dashboard .paetzold-stadium-hero:hover,
+.cinematic-dashboard .paetzold-stadium-hero:focus-within{
+  border-color:#487da9!important;
+  box-shadow:0 24px 60px rgba(0,8,21,.43),inset 0 1px rgba(222,237,255,.09)!important;
+}
+.cinematic-dashboard .paetzold-stadium-hero:hover .paetzold-player{
+  filter:saturate(.93) contrast(1.05) brightness(.98)!important;
+  scale:1!important;
+}
+@media(max-width:760px){
+  .cinematic-dashboard .paetzold-stadium-hero{
+    grid-template-columns:minmax(0,25%) minmax(0,75%)!important;
+  }
+  .cinematic-dashboard .paetzold-stadium-hero .stadium-banner-copy{
+    padding:15px 12px 15px 0!important;
+  }
+  .cinematic-dashboard .paetzold-stadium-hero .stadium-banner-copy h1{
+    font-size:clamp(1.34rem,5.2vw,2.3rem)!important;
+    letter-spacing:-.025em!important;
+  }
+  .cinematic-dashboard .paetzold-stadium-hero .paetzold-player{
+    background-position:52% top!important;
+    filter:saturate(.92) contrast(1.04) brightness(1.02)!important;
+  }
+  .cinematic-dashboard .paetzold-stadium-hero .hero-player-area::after{
+    background:
+      linear-gradient(90deg,
+        rgba(5,15,29,.10),
+        rgba(6,20,37,.33) 29%,
+        rgba(6,18,34,.55) 56%,
+        rgba(6,17,33,.78) 100%)!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .cinematic-dashboard .paetzold-stadium-hero .paetzold-player,
+  .cinematic-dashboard .paetzold-stadium-hero .stadium-banner-copy{
+    animation:none!important;
+    transition:none!important;
+    transform:none!important;
+  }
+}

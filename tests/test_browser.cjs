@@ -37,19 +37,33 @@ async function testSize(browser, config) {
     const hero=await page.locator('.paetzold-stadium-hero').evaluate(node=>{
       const player=node.querySelector('.paetzold-player');
       const front=node.querySelector('.paetzold-player-front');
+      const picture=getComputedStyle(player);
+      const copy=node.querySelector('.stadium-banner-copy');
+      const photoRect=player.getBoundingClientRect();
+      const heroRect=node.getBoundingClientRect();
       return {
         background:getComputedStyle(node).backgroundImage,
-        mask:getComputedStyle(player).maskImage,
-        mode:getComputedStyle(player).mixBlendMode,
-        frontMask:getComputedStyle(front).maskImage,
-        image:getComputedStyle(player).backgroundImage
+        mask:picture.maskImage,
+        mode:picture.mixBlendMode,
+        image:picture.backgroundImage,
+        imageSize:picture.backgroundSize,
+        overlay:getComputedStyle(node.querySelector('.hero-player-area'),'::after').backgroundImage,
+        frontVisible:getComputedStyle(front).display,
+        photoRect:{width:photoRect.width,height:photoRect.height},
+        heroRect:{width:heroRect.width,height:heroRect.height},
+        copyAbovePhoto:Number(getComputedStyle(copy).zIndex)>Number(getComputedStyle(node.querySelector('.hero-player-area')).zIndex)
       };
     });
-    assert.match(hero.mask,/paetzold-silhouette\.svg/);
-    assert.match(hero.frontMask,/paetzold-silhouette\.svg/);
+    assert.equal(hero.mask,'none','new full-frame player photo must not use the old silhouette mask');
+    assert.equal(hero.frontVisible,'none','only one player photo layer should appear');
     assert.equal(hero.mode,'normal');
     assert.match(hero.image,/paetzold-player\.png/);
-    assert.match(hero.background,/gradient/);
+    assert.equal(hero.imageSize,'cover');
+    assert.match(hero.overlay,/gradient/);
+    assert.ok(hero.copyAbovePhoto,'SURVIVOR POOL lettering must be above the photo');
+    assert.ok(hero.photoRect.width>=hero.heroRect.width && hero.photoRect.height>=hero.heroRect.height,
+      'photo must cover entire hero banner');
+    assert.equal((await page.request.get(origin+'/icons/paetzold-player.png')).status(),200);
     const overflow=await page.evaluate(()=>
       document.documentElement.scrollWidth-document.documentElement.clientWidth);
     assert.ok(overflow<=2,name+' dashboard overflow: '+overflow+'px');

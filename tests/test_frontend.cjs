@@ -280,6 +280,25 @@ test('new motion director is accessibility and data safe with DOM unavailable',(
   assert.ok(registrations.some(r=>r==='window:scroll'));
   assert.ok(registrations.some(r=>r==='document:pointermove'));
 });
+test('new 49ers action photo is full-bleed with the headline in front',()=>{
+  const premium=fs.readFileSync(path.join(root,'public/css/premium.css'),'utf8');
+  const index=fs.readFileSync(path.join(root,'public/index.html'),'utf8');
+  const sw=fs.readFileSync(path.join(root,'public/service-worker.js'),'utf8');
+  const start=premium.lastIndexOf('NEW 49ERS DASHBOARD COVER');
+  assert.ok(start>0);
+  const css=premium.slice(start);
+  assert.match(css,/background-image:url\('\/icons\/paetzold-player\.png'\)!important/);
+  assert.match(css,/background-size:cover!important/);
+  assert.match(css,/mask-image:none!important/);
+  assert.match(css,/paetzold-player-front\{[\s\S]*?display:none!important/);
+  assert.match(css,/stadium-banner-copy\{[\s\S]*?grid-column:2!important/);
+  assert.match(css,/stadium-banner-copy\{[\s\S]*?z-index:3!important/);
+  assert.match(css,/hero-player-area::after/);
+  assert.match(css,/@media\(max-width:760px\)/);
+  assert.match(css,/prefers-reduced-motion:reduce/);
+  assert.match(index,/css\/premium\.css/);
+  assert.match(sw,/\/icons\/paetzold-player\.png/);
+});
 test('public frontend contains neither shared password nor private hashes',()=>{
   const js=fs.readFileSync(path.join(root,'public/js/app.js'),'utf8');
   assert.doesNotMatch(js,/NURDERHSV|scrypt\$/);
