@@ -54,12 +54,18 @@ async function testSize(browser, config) {
       document.documentElement.scrollWidth-document.documentElement.clientWidth);
     assert.ok(overflow<=2,name+' dashboard overflow: '+overflow+'px');
     assert.equal(await page.locator('.stat-card').count(),4);
+    const statsBox=await page.locator('.stats-grid').boundingBox();
+    assert.ok(statsBox && statsBox.x+statsBox.width<=width+2,
+      name+' stat cards clipped on right by '+(statsBox.x+statsBox.width-width)+'px');
     await snapshot(page,name+'-dashboard');
 
     const nav=await page.locator('.bottom-nav a[href="#games"]').isVisible() ? '.bottom-nav' : '.sidebar .nav-link';
     await page.locator(nav+'[href="#games"]').click();
     await visible(page,'.games-grid.full');
     assert.ok(await page.locator('.games-grid.full .game-card').count()>0);
+    const gamesBox=await page.locator('.games-grid.full').boundingBox();
+    assert.ok(gamesBox && gamesBox.x+gamesBox.width<=width+2,
+      name+' games grid clipped on right by '+(gamesBox.x+gamesBox.width-width)+'px');
     await page.evaluate(()=>window.scrollTo(0,Math.min(600,document.body.scrollHeight)));
     await page.waitForTimeout(400);
     await snapshot(page,name+'-games');
@@ -67,6 +73,9 @@ async function testSize(browser, config) {
     await page.locator(nav+'[href="#leaderboard"]').click();
     await visible(page,'.leaderboard-panel');
     assert.ok(await page.locator('.leaderboard-row').count()>0);
+    const leadersBox=await page.locator('.leaderboard-panel').boundingBox();
+    assert.ok(leadersBox && leadersBox.x+leadersBox.width<=width+2,
+      name+' leaderboard clipped on right by '+(leadersBox.x+leadersBox.width-width)+'px');
     assert.ok(!(await page.locator('.leaderboard-panel').innerText()).includes('Ausgeschieden'));
     await snapshot(page,name+'-leaderboard');
 
