@@ -305,6 +305,18 @@ class App:
 
     def snapshot(self, db, user, settings, now):
         games = {g["id"]: dict(g) for g in db.execute("SELECT * FROM games WHERE season=? ORDER BY week,kickoff,id", (settings["season"],))}
+        # Sportsbook lines are public display-only metadata, separate from the
+        # secret Survivor picks. Ignore expired ESPN lines and non-ESPN feeds.
+        saved_odds = settings.get("espn_odds") or {}
+        if (settings.get("source") == "espn" and settings.get("espn_odds_season") == settings["season"]
+                and isinstance(saved_odds, dict)):
+            for gid, game in games.items():
+                line = saved_odds.get(gid)
+                if not isinstance(line, dict):
+                    continue
+                updated = line.get("updated_at")
+                if isinstance(updated, (int, float)) and 0 <= now - updated < 3600:
+                    game["espn_odds"] = line
         users = [dict(u) for u in db.execute("SELECT id,username,display_name,role,joined_week FROM users")]
         images = {row["user_id"]: row["image_data"] for row in db.execute("SELECT user_id,image_data FROM profile_images")}
         for player in users:
