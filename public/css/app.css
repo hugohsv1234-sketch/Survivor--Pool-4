@@ -4498,3 +4498,62 @@ dialog::backdrop{background:#020713c8;backdrop-filter:blur(7px)}
 @media(prefers-reduced-motion:reduce){
  .pool-pick-rate-track i,.pool-pick-rate-track b{transition:none!important;}
 }
+
+
+/* ESPN sportsbook lines: separate from the pool's free internal pick shares. */
+.espn-odds{
+ display:flex;flex-direction:column;gap:8px;
+ background:linear-gradient(135deg,#0e2945,#091c31)!important;
+ border-top:1px solid #396d9a!important;
+ padding:11px 12px 13px!important;
+ min-width:0;
+}
+.espn-odds-header{
+ display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;
+ gap:5px 8px;
+}
+.espn-odds-header strong,.espn-odds.empty>span{
+ font-size:.66rem!important;font-weight:850!important;letter-spacing:.12em;
+ color:#acd5ff!important;
+}
+.espn-odds-header small,.espn-odds.empty>small{
+ font-size:.68rem!important;color:#eac0cc!important;
+}
+.espn-odds-grid{
+ display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px 8px;
+}
+.espn-odds-pair,.espn-odds-figure{
+ display:flex;flex-direction:column;gap:5px;
+ padding:9px;
+ border:1px solid #3b6b93!important;
+ background:#0c2237!important;
+ border-radius:8px;
+ min-width:0;
+}
+.espn-odds-pair>span,.espn-odds-figure>span{
+ font-size:.66rem!important;color:#a7cee9!important;
+}
+.espn-odds-pair>div{
+ display:flex;flex-wrap:wrap;gap:5px 12px;
+}
+.espn-odds-pair b,.espn-odds-figure strong{
+ font-size:clamp(.78rem,1vw,.98rem)!important;
+ color:#f4c8d5!important;
+ font-weight:800!important;
+ font-variant-numeric:tabular-nums;
+}
+.espn-odds-note{
+ color:#a1bcd7!important;
+ font-size:.63rem!important;
+ line-height:1.35;
+}
+.espn-odds.empty{
+ display:flex;flex-direction:row;align-items:center;
+ justify-content:space-between;flex-wrap:wrap;gap:6px;
+ min-height:35px;
+}
+@media(max-width:620px){
+ .espn-odds{padding:10px!important;}
+ .espn-odds-grid{grid-template-columns:repeat(auto-fit,minmax(105px,1fr));}
+ .espn-odds-pair b,.espn-odds-figure strong{font-size:.83rem!important;}
+}
