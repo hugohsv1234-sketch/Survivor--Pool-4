@@ -672,3 +672,41 @@ button:focus-visible,a:focus-visible{
   .games-grid{gap:9px!important;}
   .public-bets-widget,.pool-pick-rate{padding-inline:9px!important;}
 }
+
+
+/* RESPONSIVE FIX: legacy app.css sets width:100% on .workspace while keeping
+   a 226px / 202px fixed sidebar. That made the page wider than the actual
+   viewport and cut off the fourth statistic card and rightmost games.
+   Size the workspace to the remaining space, not to the full viewport. */
+@media (min-width:1251px) {
+  .app-shell > .workspace{
+    width:calc(100% - 226px)!important;
+    max-width:calc(100% - 226px)!important;
+    margin-left:226px!important;
+  }
+}
+@media (min-width:801px) and (max-width:1250px) {
+  .app-shell > .workspace{
+    width:calc(100% - 202px)!important;
+    max-width:calc(100% - 202px)!important;
+    margin-left:202px!important;
+  }
+}
+@media (max-width:800px) {
+  .app-shell > .workspace{
+    width:100%!important;
+    max-width:100%!important;
+    margin-left:0!important;
+  }
+}
+.app-shell > .workspace .content,
+.app-shell > .workspace .page-content,
+.app-shell > .workspace .cinematic-dashboard,
+.app-shell > .workspace .dashboard-columns,
+.app-shell > .workspace .dashboard-aside,
+.app-shell > .workspace .stats-grid,
+.app-shell > .workspace .games-grid{
+  min-width:0;
+  max-width:100%;
+}
+.app-shell > .workspace .content{box-sizing:border-box!important;}
