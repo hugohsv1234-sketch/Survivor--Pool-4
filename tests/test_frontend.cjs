@@ -107,6 +107,24 @@ test('game cards show privacy-safe pool tip percentages after kickoff',()=>{
   assert.match(html,/Nach Spielbeginn sichtbar/);
   t.receive(snapshot);
 });
+test('ESPN moneyline converts American odds into German decimal odds without touching pool rates',()=>{
+  const copy=structuredClone(snapshot);
+  const target=copy.games.find(g=>g.week===5);
+  assert.ok(target);
+  target.espn_odds={
+    provider:'DraftKings',details:'BAL -2.5',spread:-2.5,total:45.5,
+    away_moneyline:150,home_moneyline:-150,updated_at:copy.now
+  };
+  t.receive(copy);t.state.week=5;t.state.route='games';t.render();
+  const html=elements['#app'].innerHTML;
+  assert.match(html,/ESPN-WETTQUOTEN/);
+  assert.match(html,/DraftKings/);
+  assert.match(html,/2,50/);
+  assert.match(html,/1,67/);
+  assert.match(html,/45,5 Punkte/);
+  assert.match(html,/POOL-TIPPQUOTEN/);
+  t.receive(snapshot);
+});
 test('public frontend contains neither shared password nor private hashes',()=>{
   const js=fs.readFileSync(path.join(root,'public/js/app.js'),'utf8');
   assert.doesNotMatch(js,/NURDERHSV|scrypt\$/);
