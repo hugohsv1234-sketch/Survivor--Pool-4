@@ -176,6 +176,32 @@ test('eliminated players remain allowed to participate in later weeks',()=>{
   assert.ok(!t.eligibility(game,'CIN').reasons.some(reason=>reason.includes('ausgeschieden')));
   t.receive(snapshot);
 });
+test('immersive dashboard motion layers the player without changing pool data',()=>{
+  t.receive(snapshot);t.state.route='dashboard';t.render();
+  const html=elements['#app'].innerHTML;
+  assert.match(html,/class="real-football-player paetzold-player"/);
+  assert.match(html,/class="paetzold-player-front"/);
+  assert.match(html,/stadium-banner-copy/);
+  assert.match(html,/SURVIVOR/);
+  assert.match(html,/POOL/);
+  assert.match(html,/mini-ranking/);
+  assert.match(html,/game-card/);
+});
+test('motion assets are decorative, locally served and reduced-motion safe',()=>{
+  const motion=fs.readFileSync(path.join(root,'public/js/immersive-motion.js'),'utf8');
+  const css=fs.readFileSync(path.join(root,'public/css/app.css'),'utf8');
+  const index=fs.readFileSync(path.join(root,'public/index.html'),'utf8');
+  const worker=fs.readFileSync(path.join(root,'public/service-worker.js'),'utf8');
+  assert.doesNotThrow(()=>new Function(motion));
+  assert.match(index,/js\/immersive-motion\.js/);
+  assert.match(worker,/immersive-motion\.js/);
+  assert.match(motion,/prefers-reduced-motion: reduce/);
+  assert.match(motion,/IntersectionObserver/);
+  assert.match(motion,/passive:true/);
+  assert.match(css,/paetzold-player-front/);
+  assert.match(css,/motion-reveal-item/);
+  assert.match(css,/prefers-reduced-motion:reduce/);
+});
 test('public frontend contains neither shared password nor private hashes',()=>{
   const js=fs.readFileSync(path.join(root,'public/js/app.js'),'utf8');
   assert.doesNotMatch(js,/NURDERHSV|scrypt\$/);
