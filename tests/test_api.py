@@ -7,12 +7,15 @@ import io
 import json
 import tempfile
 import time
+from datetime import datetime
 import unittest
+from unittest.mock import patch
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from backend.app import App
 from backend.security import hash_password, verify_password
 from backend.providers import apply_snapshot, refresh, utc_timestamp
+from backend.betting_splits import parse_ticket_percentages, refresh_ticket_percentages, NEW_YORK
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -280,6 +283,49 @@ class ApiTests(unittest.TestCase):
             db.execute("INSERT INTO rate_limits VALUES(?,29,?)",("/api/gate:127.0.0.1",time.time()+900))
         self.assertEqual(self.client.call("/api/gate",{"password":"wrong"})[0],401)
         self.assertEqual(self.client.gate()[0],429)
+
+    def test_true_ticket_percentages_are_not_bookmaker_prices(self):
+        html = """
+        <article><h5>BAL Ravens @ CIN Bengals</h5><div>10/25, 01:00PM</div>
+        <section>Moneyline</section><span>Odds</span><span>% Handle</span><span>% Bets</span>
+        <div>CIN Bengals</div><a>-148</a><span>18%</span><span>15%</span>
+        <div>BAL Ravens</div><a>+124</a><span>82%</span><span>85%</span>
+        <div>Spread</div><div>BAL Ravens</div><span>10%</span><span>90%</span></article>
+        """
+        result = parse_ticket_percentages(html)
+        self.assertEqual(result, {("BAL", "CIN", 10, 25): {"BAL": 85, "CIN": 15}})
+        # Never fall back to a percentage computed from a market price.
+        self.assertEqual(parse_ticket_percentages(
+            "<h5>BAL Ravens @ CIN Bengals</h5><div>10/25</div>Moneyline "
+            "<div>BAL Ravens</div><div>-130</div><div>CIN Bengals</div><div>+120</div>"), {})
+
+    def test_public_ticket_percent_fetch_is_safe_optional_and_age_limited(self):
+        self.login()
+        with self.app.store.connect() as db:
+            game = db.execute("SELECT * FROM games WHERE id='d2026-5-0'").fetchone()
+            kickoff = datetime.fromtimestamp(game["kickoff"], NEW_YORK)
+        day = f"{kickoff.month}/{kickoff.day}"
+        page = (
+            f"<h5>{game['away']} Ravens @ {game['home']} Bengals</h5>"
+            f"<span>{day}, 01:00PM</span><div>Moneyline</div>"
+            "<span>Odds</span><span>% Handle</span><span>% Bets</span>"
+            "<div>CIN Bengals</div><div>-130</div><span>39%</span><span>65%</span>"
+            "<div>BAL Ravens</div><div>+120</div><span>61%</span><span>35%</span>"
+            "<div>Spread</div>")
+        with patch("backend.betting_splits._fetch_page", return_value=page) as fetched:
+            self.assertTrue(refresh_ticket_percentages(self.app.store))
+            self.assertEqual(fetched.call_count, 2)
+        state = self.client.state()
+        observed = next(g for g in state["games"] if g["id"] == game["id"])
+        self.assertEqual(observed["public_bet_percent"], {"BAL": 35, "CIN": 65})
+        self.assertEqual(observed["public_bet_source"], "DraftKings")
+        with self.app.store.transaction() as db:
+            settings = self.app.store.settings(db)
+            self.app.store.set(db, "public_bet_splits", {
+                game["id"]: {"updated_at": time.time() - 10000,
+                              "percent": {"BAL": 35, "CIN": 65}}})
+        stale = next(g for g in self.client.state()["games"] if g["id"] == game["id"])
+        self.assertNotIn("public_bet_percent", stale)
 
     def test_public_assets_and_pwa_cache_exclusion(self):
         for path in ("/","/css/app.css","/js/app.js","/manifest.json","/service-worker.js","/icons/icon-192.png","/icons/icon-512.png"):

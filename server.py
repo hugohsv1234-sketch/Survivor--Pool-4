@@ -8,6 +8,7 @@ from socketserver import ThreadingMixIn
 from wsgiref.simple_server import WSGIServer, make_server
 from backend.app import App
 from backend.providers import refresh, refresh_espn
+from backend.betting_splits import refresh_ticket_percentages
 
 ROOT = Path(__file__).resolve().parent
 
@@ -35,6 +36,12 @@ def create_app(port=8000, host="127.0.0.1"):
                     refresh(app.store, os.environ["NFL_FEED_URL"], os.environ.get("NFL_FEED_TOKEN"))
                 else:
                     refresh_espn(app.store, os.environ.get("NFL_SEASON"))
+                # Best-effort public ticket percentages (30-minute throttle).
+                # Never block pool scoring or user picks on third-party data.
+                try:
+                    refresh_ticket_percentages(app.store)
+                except Exception as exc:
+                    print(f"Öffentliche Wettanteile vorübergehend nicht abrufbar: {exc}", flush=True)
                 threading.Event().wait(120)
         # Load once before serving so a fresh production database has fixtures.
         if os.environ.get("NFL_FEED_URL"):

@@ -150,9 +150,34 @@
       <div class="pool-pick-rate-track" role="img" aria-label="${away} Prozent ${esc(game.away)}, ${home} Prozent ${esc(game.home)}"><i style="width:${away}%"></i><b style="width:${home}%"></b></div>
     </div>`;
   }
+  function publicBetPercent(game) {
+    // Count of publicly reported Moneyline betting tickets, NOT money
+    // amounts, win probability, or privately submitted pool picks.
+    const values = game.public_bet_percent;
+    const away = values?.[game.away], home = values?.[game.home];
+    const link = 'https://dknetwork.draftkings.com/draftkings-sportsbook-betting-splits/';
+    if (!(Number.isInteger(away) && Number.isInteger(home)
+        && away>=0 && away<=100 && home>=0 && home<=100
+        && Math.abs(away+home-100)<=2)) {
+      return game.status==='scheduled' || game.status==='live'
+        ? '<div class="public-bets-widget empty"><span>ÖFFENTLICHE WETTANTEILE</span><small>Aktuell keine Prozentdaten</small></div>' : '';
+    }
+    const updated = Number(game.public_bet_updated_at);
+    const updateLabel = Number.isFinite(updated) ? ` · ${date(updated)}` : '';
+    const favored = away>home ? game.away : home>away ? game.home : '';
+    return `<div class="public-bets-widget" aria-label="Anteil der abgegebenen Moneyline-Wetten: ${esc(game.away)} ${away} Prozent, ${esc(game.home)} ${home} Prozent">
+      <div class="public-bets-heading"><strong>SO WIRD GEWETTET</strong><small>% der Wetten · Moneyline</small></div>
+      <div class="public-bets-sides">
+        <span class="${favored===game.away?'most':''}"><b>${esc(game.away)}</b><strong>${away}%</strong></span>
+        <span class="${favored===game.home?'most':''}"><b>${esc(game.home)}</b><strong>${home}%</strong></span>
+      </div>
+      <div class="public-bets-bar" role="img" aria-label="${esc(game.away)} ${away} Prozent; ${esc(game.home)} ${home} Prozent"><i style="width:${away}%"></i><b style="width:${home}%"></b></div>
+      <small class="public-bets-source">Quelle: <a href="${link}" target="_blank" rel="noopener noreferrer">DraftKings</a>${esc(updateLabel)} · Anzahl Wetten, nicht Geldsumme</small>
+    </div>`;
+  }
   function gameCard(game) {
     const status={scheduled:isStarted(game)?'Gestartet':'Anstehend',live:'Live',final:'Beendet',postponed:'Verschoben',cancelled:'Abgesagt'}[game.status];
-    return `<article class="game-card"><div class="game-card-head"><span>${icon('clock')} ${date(game.kickoff)}</span><span class="match-status ${game.status==='live'?'live':''}">${status}</span></div><div class="matchup">${teamCard(game,game.away,false)}<span class="versus">${game.away_score!==null&&game.home_score!==null?`<b>${game.away_score}</b><small>:</small><b>${game.home_score}</b>`:'VS'}</span>${teamCard(game,game.home,true)}</div>${poolPickRate(game)}${game.status==='final'?`<div class="game-final">Endstand · ${game.away_score} : ${game.home_score}</div>`:''}</article>`;
+    return `<article class="game-card"><div class="game-card-head"><span>${icon('clock')} ${date(game.kickoff)}</span><span class="match-status ${game.status==='live'?'live':''}">${status}</span></div><div class="matchup">${teamCard(game,game.away,false)}<span class="versus">${game.away_score!==null&&game.home_score!==null?`<b>${game.away_score}</b><small>:</small><b>${game.home_score}</b>`:'VS'}</span>${teamCard(game,game.home,true)}</div>${poolPickRate(game)}${publicBetPercent(game)}${game.status==='final'?`<div class="game-final">Endstand · ${game.away_score} : ${game.home_score}</div>`:''}</article>`;
   }
   function legend() {return '<div class="legend"><span><i class="dot green"></i>Verfügbar</span><span><i class="dot red"></i>Schon verwendet</span><span><i class="dot orange"></i>3× dagegen</span><button data-action="rules" aria-label="Farben und Regeln erklären">'+icon('info')+'</button></div>';}
   function weekControl() {return `<div class="week-control"><button class="icon-button" data-action="prev-week" aria-label="Vorheriger Spieltag" ${state.week===1?'disabled':''}>${icon('chevron','rotate')}</button><select id="week-select" aria-label="Spieltag auswählen">${state.data.weeks.map(w=>`<option value="${w.number}" ${state.week===w.number?'selected':''}>${esc(w.name)}${w.number===state.data.current_week?' · Aktuell':''}</option>`).join('')}</select><button class="icon-button" data-action="next-week-view" aria-label="Nächster Spieltag" ${state.week===22?'disabled':''}>${icon('chevron')}</button></div>`;}
