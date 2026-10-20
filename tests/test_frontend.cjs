@@ -24,13 +24,18 @@ const sandbox = {console,Intl,Date,performance:{now:()=>100},AbortSignal,AbortCo
 vm.createContext(sandbox);
 let source = fs.readFileSync(path.join(root,'public/js/app.js'),'utf8');
 // Expose closures ONLY in this in-memory copy; the shipped app stays private.
-source=source.replace('  bootstrap();\n})();', '  globalThis.testAPI={state,receive,render,renderGate,renderAuth,eligibility,stagePick,showRules,showTeamInfo,demoPanel,usage};\n})();');
+source=source.replace('  bootstrap();\n})();', '  globalThis.testAPI={state,receive,render,renderAuth,eligibility,stagePick,showRules,showTeamInfo,demoPanel,usage};\n})();');
 vm.runInContext(source,sandbox);
 const t=sandbox.testAPI;
 let passed=0;
 function test(name,fn){fn();passed++;console.log(`PASS ${name}`);}
-test('gate exposes no games or private player data',()=>{
-  t.renderGate();assert.match(elements['#app'].innerHTML,/Pool öffnen/);assert.doesNotMatch(elements['#app'].innerHTML,/d2026-|Survivor2026|NURDERHSV|mini-player/);
+test('login opens without any shared pool password gate',()=>{
+  t.renderAuth();
+  const html=elements['#app'].innerHTML;
+  assert.match(html,/Einloggen/);
+  assert.match(html,/id="username"/);
+  assert.match(html,/id="password"/);
+  assert.doesNotMatch(html,/Pool öffnen|Gemeinsames Pool-Passwort|d2026-|mini-player/);
 });
 test('demo authentication and registration render required fields',()=>{
   t.state.demo=true;t.renderAuth();assert.match(elements['#app'].innerHTML,/Mit|Demo|DEMO/);assert.match(elements['#app'].innerHTML,/data-user="max"/);
