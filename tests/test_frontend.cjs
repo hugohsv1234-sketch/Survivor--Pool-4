@@ -223,12 +223,62 @@ test('original photo is clipped to a real vector player silhouette, not screen b
 });
 test('touch parallax uses passive events, handles touch end, and never interferes with pool picks',()=>{
   const js=fs.readFileSync(path.join(root,'public/js/immersive-motion.js'),'utf8');
-  assert.match(js,/pointerType==='touch'/);
+  assert.match(js,/pointerType\s*===\s*'touch'/);
   assert.match(js,/pointercancel/);
   assert.match(js,/pointerup/);
   assert.match(js,/prefers-reduced-motion: reduce/);
   assert.doesNotMatch(js,/preventDefault\(|fetch\(|\/api\/pick/);
   assert.doesNotThrow(()=>new Function(js));
+});
+test('premium design styles every existing route without adding APIs or remote libraries',()=>{
+  const css=fs.readFileSync(path.join(root,'public/css/premium.css'),'utf8');
+  const html=fs.readFileSync(path.join(root,'public/index.html'),'utf8');
+  const worker=fs.readFileSync(path.join(root,'public/service-worker.js'),'utf8');
+  assert.ok(css.length > 18000, 'substantial new design across all pages');
+  for(const selector of [
+    '.sidebar','.topbar','.bottom-nav','.page-heading',
+    '.stat-card','.pick-hero','.game-card','.leaderboard-panel',
+    '.season-table','.history-pick','.inventory-team',
+    '.account-setting','.auth-card','dialog','.toast'
+  ]) assert.ok(css.includes(selector), selector+' should be visually enhanced');
+  assert.match(html,/css\/app\.css/);
+  assert.match(html,/css\/premium\.css/);
+  assert.ok(html.indexOf('css/app.css')<html.indexOf('css/premium.css'),
+    'new overrides must load after stable existing CSS');
+  assert.match(worker,/css\/premium\.css/);
+  assert.match(css,/--premium-blue:/);
+  assert.match(css,/--premium-red:/);
+  assert.match(css,/prefers-reduced-motion:reduce/);
+  assert.match(css,/@media\(max-width:760px\)/);
+  assert.match(css,/@media\(max-width:430px\)/);
+  assert.match(css,/paetzold-silhouette\.svg/);
+  assert.match(css,/mix-blend-mode:normal!important/);
+  assert.doesNotMatch(css,/@import|fonts\.googleapis|new CSSStyleSheet/);
+  assert.equal((css.match(/\{/g)||[]).length, (css.match(/\}/g)||[]).length);
+});
+test('new motion director is accessibility and data safe with DOM unavailable',()=>{
+  const code=fs.readFileSync(path.join(root,'public/js/immersive-motion.js'),'utf8');
+  assert.doesNotThrow(()=>new Function(code));
+  for(const phrase of [
+    'IntersectionObserver','MutationObserver','requestAnimationFrame',
+    'pm-reveal','prefers-reduced-motion: reduce','pointercancel',
+    'pointerup','visibilitychange','pm-route-enter','pm-visible'
+  ]) assert.ok(code.includes(phrase), phrase+' is required');
+  assert.doesNotMatch(code,/preventDefault\s*\(|\bfetch\s*\(|XMLHttpRequest|\.submit\(|\/api\/pick/);
+  const registrations=[];
+  const fakeRoot={querySelector:()=>null,querySelectorAll:()=>[]};
+  const mql={matches:true,addEventListener(){}};
+  const sandbox2={
+    document:{querySelector:key=>key==='#app'?fakeRoot:null,addEventListener:(key)=>registrations.push('document:'+key),hidden:false},
+    window:{matchMedia:()=>mql,addEventListener:(key)=>registrations.push('window:'+key)},
+    MutationObserver:class{observe(){}},
+    requestAnimationFrame:()=>1,cancelAnimationFrame(){},
+    location:{hash:'#dashboard'},
+    console
+  };
+  assert.doesNotThrow(()=>vm.runInNewContext(code,sandbox2));
+  assert.ok(registrations.some(r=>r==='window:scroll'));
+  assert.ok(registrations.some(r=>r==='document:pointermove'));
 });
 test('public frontend contains neither shared password nor private hashes',()=>{
   const js=fs.readFileSync(path.join(root,'public/js/app.js'),'utf8');

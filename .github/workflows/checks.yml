@@ -30,3 +30,41 @@ jobs:
 
       - name: Frontend-Tests ausführen
         run: node tests/test_frontend.cjs
+
+  browser:
+    name: Responsive Browser Smoke (desktop / tablet / phone)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Repository laden
+        uses: actions/checkout@v4
+      - name: Python bereitstellen
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Node bereitstellen
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Browser-Test-Abhängigkeiten installieren
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Isolierten Demo-Server für Browser-Tests starten
+        run: |
+          POOL_DB="$RUNNER_TEMP/browser-demo.sqlite3" python3 server.py --port 8765 --host 127.0.0.1 > "$RUNNER_TEMP/browser-server.log" 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8765/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/browser-server.log"
+          exit 1
+      - name: Desktop-, Tablet-, Handy- und Reduced-Motion-Test
+        run: node tests/test_browser.cjs
+      - name: Visuelle Test-Screenshots speichern
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: survivor-premium-visual-qa
+          path: test-results/
+          if-no-files-found: ignore
