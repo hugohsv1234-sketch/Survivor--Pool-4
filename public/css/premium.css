@@ -730,3 +730,12 @@ button:focus-visible,a:focus-visible{
     font-size:2.15rem!important;
   }
 }
+
+
+/* ACCESSIBLE FAST-SCROLL SAFETY: do not hide offscreen cards while waiting
+   for IntersectionObserver. On fast mobile swipes a pending reveal otherwise
+   leaves a momentarily blank games page. Reveal animation still plays when
+   the element intersects, but its static state must always be visible. */
+@media (prefers-reduced-motion:no-preference) {
+  .pm-reveal.pm-wait{opacity:1!important;visibility:visible!important;}
+}
