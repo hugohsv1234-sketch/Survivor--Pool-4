@@ -74,6 +74,63 @@ class ApiTests(unittest.TestCase):
     def select(self, team="BAL"):
         return self.client.call("/api/pick", {"game_id": "d2026-5-0", "team": team})
 
+    def test_week_six_sheet_updates_old_pending_results_and_exact_names(self):
+        self.login()
+        # Simulate rows imported on the earlier deployment before week six ended.
+        with self.app.store.connect() as db:
+            db.execute("UPDATE historical_picks SET result='pending' WHERE user_id=1 AND week=6")
+            for name in ("Alec", "Sascha", "Conner"):
+                db.execute(
+                    "INSERT INTO users(username,display_name,password_hash,role,joined_week,created_at) "
+                    "VALUES(?,?,?,?,?,?)",
+                    (name.lower(), name, self.pool_hash, "player", 6, time.time()))
+        # Results from future gameweeks must not leak into the leaderboard.
+        before = self.client.state()
+        self.assertFalse(any(h["week"] == 6 for h in before["historical_picks"]))
+        status, after, _ = self.client.call("/api/demo", {"action": "next_week"})
+        self.assertEqual(status, 200)
+        players = {p["display_name"]: p for p in after["players"]}
+        sixth = {(players_by_id["display_name"], h["week"]): h
+                 for h in after["historical_picks"]
+                 for players_by_id in after["players"] if players_by_id["id"] == h["user_id"]
+                 and h["week"] == 6}
+        self.assertEqual(sixth[("Max", 6)]["result"], "loss")
+        self.assertEqual(sixth[("Max", 6)]["matchup"], "IND-TEN")
+        for name, matchup in (("Alec", "CAR-PHI"), ("Sascha", "NE-NYJ"), ("Conner", "NE-NYJ")):
+            self.assertEqual(sixth[(name, 6)]["result"], "win")
+            self.assertEqual(sixth[(name, 6)]["matchup"], matchup)
+        self.assertFalse(players["Max"]["stats"]["survivor"])
+        # Refreshing repeatedly should not create duplicate historic picks.
+        self.client.state()
+        with self.app.store.connect() as db:
+            rows = list(db.execute("SELECT * FROM historical_picks WHERE user_id=1 AND week=6"))
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["result"], "loss")
+
+    def test_pool_rates_keep_early_picks_private_until_kickoff(self):
+        self.login()
+        self.assertEqual(self.select("BAL")[0], 200)
+        second = Client(self.app)
+        self.assertEqual(second.login("lea")[0], 200)
+        self.assertNotIn("d2026-5-0", second.state()["pick_rates"])
+        status, _, _ = self.client.call("/api/demo", {"action": "kickoff", "game_id": "d2026-5-0"})
+        self.assertEqual(status, 200)
+        rates = second.state()["pick_rates"]["d2026-5-0"]
+        self.assertEqual(rates["total"], 1)
+        self.assertEqual(rates["percent"]["BAL"], 100)
+        self.assertEqual(rates["percent"]["CIN"], 0)
+
+    def test_official_pick_takes_priority_over_historical_week_six(self):
+        self.login()
+        with self.app.store.connect() as db:
+            fixture = db.execute("SELECT * FROM games WHERE week=6 LIMIT 1").fetchone()
+            db.execute("INSERT INTO picks(user_id,season,week,game_id,team,created_at,updated_at,locked_at) "
+                       "VALUES(?,?,?,?,?,?,?,?)",
+                       (1, 2026, 6, fixture["id"], fixture["away"], time.time(), time.time(), None))
+        _, result, _ = self.client.call("/api/demo", {"action": "next_week"})
+        self.assertEqual(result["me"]["stats"]["losses"], 0)
+        self.assertTrue(any(p["week"] == 6 and p["user_id"] == 1 for p in result["picks"]))
+
     def test_gate_authentication_and_logout_boundary(self):
         self.assertEqual(self.client.call("/api/state")[0], 401)
         self.assertEqual(self.client.call("/api/login", {"username":"max","password":"Survivor2026!"})[0], 401)
