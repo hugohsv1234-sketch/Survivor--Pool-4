@@ -150,9 +150,41 @@
       <div class="pool-pick-rate-track" role="img" aria-label="${away} Prozent ${esc(game.away)}, ${home} Prozent ${esc(game.home)}"><i style="width:${away}%"></i><b style="width:${home}%"></b></div>
     </div>`;
   }
+  function espnMoneylineDecimal(american) {
+    const value = Number(american);
+    if (!Number.isFinite(value) || Math.abs(value)<100 || Math.abs(value)>100000 || american===null || american===undefined) return '–';
+    const decimal = value > 0 ? 1 + value/100 : 1 + 100/Math.abs(value);
+    return decimal.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+  function espnOddsCard(game) {
+    const line = game.espn_odds;
+    if (!line) {
+      return game.status==='scheduled' || game.status==='live'
+        ? '<div class="espn-odds empty"><span>ESPN-WETTQUOTEN</span><small>Derzeit nicht verfügbar</small></div>'
+        : '';
+    }
+    const hasMoneyline = line.home_moneyline!==null && line.home_moneyline!==undefined || line.away_moneyline!==null && line.away_moneyline!==undefined;
+    const detail = typeof line.details==='string' && line.details.trim() ? line.details.trim() : '';
+    const spread = line.spread!==null && line.spread!==undefined && Number.isFinite(Number(line.spread))
+      ? Number(line.spread).toLocaleString('de-DE',{maximumFractionDigits:1}) : '';
+    const total = line.total!==null && line.total!==undefined && Number.isFinite(Number(line.total))
+      ? Number(line.total).toLocaleString('de-DE',{maximumFractionDigits:1}) : '';
+    const provider = typeof line.provider==='string' ? line.provider : 'ESPN-Daten';
+    const updatedAt = Number(line.updated_at);
+    const timeLabel = Number.isFinite(updatedAt) ? timeOnly(updatedAt) : '';
+    return `<div class="espn-odds">
+      <div class="espn-odds-header"><strong>ESPN-WETTQUOTEN</strong><small>${esc(provider)}${timeLabel?' · '+esc(timeLabel):''}</small></div>
+      <div class="espn-odds-grid">
+        ${hasMoneyline?`<div class="espn-odds-pair"><span>Moneyline · Dezimal</span><div><b>${esc(game.away)} ${espnMoneylineDecimal(line.away_moneyline)}</b><b>${esc(game.home)} ${espnMoneylineDecimal(line.home_moneyline)}</b></div></div>`:''}
+        ${detail || spread ? `<div class="espn-odds-figure"><span>Handicap</span><strong>${esc(detail||spread)}</strong></div>`:''}
+        ${total ? `<div class="espn-odds-figure"><span>Über / Unter</span><strong>${total} Punkte</strong></div>`:''}
+      </div>
+      <small class="espn-odds-note">Info von ESPN · kann sich ändern · keine Pool-Tippquote</small>
+    </div>`;
+  }
   function gameCard(game) {
     const status={scheduled:isStarted(game)?'Gestartet':'Anstehend',live:'Live',final:'Beendet',postponed:'Verschoben',cancelled:'Abgesagt'}[game.status];
-    return `<article class="game-card"><div class="game-card-head"><span>${icon('clock')} ${date(game.kickoff)}</span><span class="match-status ${game.status==='live'?'live':''}">${status}</span></div><div class="matchup">${teamCard(game,game.away,false)}<span class="versus">${game.away_score!==null&&game.home_score!==null?`<b>${game.away_score}</b><small>:</small><b>${game.home_score}</b>`:'VS'}</span>${teamCard(game,game.home,true)}</div>${poolPickRate(game)}${game.status==='final'?`<div class="game-final">Endstand · ${game.away_score} : ${game.home_score}</div>`:''}</article>`;
+    return `<article class="game-card"><div class="game-card-head"><span>${icon('clock')} ${date(game.kickoff)}</span><span class="match-status ${game.status==='live'?'live':''}">${status}</span></div><div class="matchup">${teamCard(game,game.away,false)}<span class="versus">${game.away_score!==null&&game.home_score!==null?`<b>${game.away_score}</b><small>:</small><b>${game.home_score}</b>`:'VS'}</span>${teamCard(game,game.home,true)}</div>${poolPickRate(game)}${espnOddsCard(game)}${game.status==='final'?`<div class="game-final">Endstand · ${game.away_score} : ${game.home_score}</div>`:''}</article>`;
   }
   function legend() {return '<div class="legend"><span><i class="dot green"></i>Verfügbar</span><span><i class="dot red"></i>Schon verwendet</span><span><i class="dot orange"></i>3× dagegen</span><button data-action="rules" aria-label="Farben und Regeln erklären">'+icon('info')+'</button></div>';}
   function weekControl() {return `<div class="week-control"><button class="icon-button" data-action="prev-week" aria-label="Vorheriger Spieltag" ${state.week===1?'disabled':''}>${icon('chevron','rotate')}</button><select id="week-select" aria-label="Spieltag auswählen">${state.data.weeks.map(w=>`<option value="${w.number}" ${state.week===w.number?'selected':''}>${esc(w.name)}${w.number===state.data.current_week?' · Aktuell':''}</option>`).join('')}</select><button class="icon-button" data-action="next-week-view" aria-label="Nächster Spieltag" ${state.week===22?'disabled':''}>${icon('chevron')}</button></div>`;}
