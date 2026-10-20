@@ -33,7 +33,7 @@ jobs:
 
   browser:
     name: Responsive Browser Smoke (desktop / tablet / phone)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 12
     steps:
       - name: Repository laden
