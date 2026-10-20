@@ -123,6 +123,54 @@ test('external real betting-ticket percentages show separately from pool stats',
   assert.doesNotMatch(html,/ESPN-WETTQUOTEN|Handicap|Über \/ Unter|Moneyline · Dezimal/);
   t.receive(snapshot);
 });
+test('leaderboards show standings without eliminated labels or status column',()=>{
+  const copy=structuredClone(snapshot);
+  copy.players.forEach(player=>{player.stats.survivor=false;});
+  copy.me.stats.survivor=false;
+  t.receive(copy);
+  t.state.route='leaderboard';t.render();
+  const full=elements['#app'].innerHTML;
+  const leaderboard=full.match(/<section class="panel leaderboard-panel">[\s\S]*?<\/section>/)?.[0];
+  assert.ok(leaderboard);
+  assert.doesNotMatch(leaderboard,/Status|Ausgeschieden|Im Rennen|rank-status/);
+  assert.match(leaderboard,/Richtige/);
+  assert.match(leaderboard,/Falsche/);
+  assert.match(leaderboard,/Tipps/);
+  t.state.route='dashboard';t.render();
+  const dashboard=elements['#app'].innerHTML;
+  const mini=dashboard.match(/<div class="mini-ranking">[\s\S]*?<\/div><a class="panel-link"/)?.[0];
+  assert.ok(mini);
+  assert.doesNotMatch(mini,/Ausgeschieden|Im Rennen/);
+  assert.match(mini,/mini-player-name/);
+  assert.match(mini,/rank-crown/);
+  t.receive(snapshot);
+});
+test('moneyline ticket percentages flank center chart with original team logos',()=>{
+  const copy=structuredClone(snapshot);
+  const game=copy.games.find(g=>g.week===5);
+  game.public_bet_percent={[game.away]:65,[game.home]:35};
+  game.public_bet_updated_at=copy.now;
+  t.receive(copy);t.state.route='games';t.state.week=5;t.render();
+  const html=elements['#app'].innerHTML;
+  assert.match(html,/public-bets-matchup/);
+  assert.match(html,/public-bets-away/);
+  assert.match(html,/public-bets-home/);
+  assert.match(html,/team-logo-wrap tiny/);
+  const chart=html.match(/<div class="public-bets-matchup">[\s\S]*?<\/div>[\s\S]*?<\/div>/)?.[0] || html;
+  assert.ok(chart.indexOf('public-bets-away') < chart.indexOf('public-bets-bar'));
+  assert.ok(html.indexOf('public-bets-bar') < html.indexOf('public-bets-home'));
+  t.receive(snapshot);
+});
+test('eliminated players remain allowed to participate in later weeks',()=>{
+  const copy=structuredClone(snapshot);
+  copy.me.stats.survivor=false;
+  copy.rules.allow_after_elimination=false;
+  t.receive(copy);
+  const game=copy.games.find(g=>g.id==='d2026-5-0');
+  assert.ok(game);
+  assert.ok(!t.eligibility(game,'CIN').reasons.some(reason=>reason.includes('ausgeschieden')));
+  t.receive(snapshot);
+});
 test('public frontend contains neither shared password nor private hashes',()=>{
   const js=fs.readFileSync(path.join(root,'public/js/app.js'),'utf8');
   assert.doesNotMatch(js,/NURDERHSV|scrypt\$/);
