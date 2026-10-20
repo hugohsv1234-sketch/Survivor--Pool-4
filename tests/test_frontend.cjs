@@ -261,7 +261,7 @@ test('new motion director is accessibility and data safe with DOM unavailable',(
   assert.doesNotThrow(()=>new Function(code));
   for(const phrase of [
     'IntersectionObserver','MutationObserver','requestAnimationFrame',
-    'premium','prefers-reduced-motion: reduce','pointercancel',
+    'pm-reveal','prefers-reduced-motion: reduce','pointercancel',
     'pointerup','visibilitychange','pm-route-enter','pm-visible'
   ]) assert.ok(code.includes(phrase), phrase+' is required');
   assert.doesNotMatch(code,/preventDefault\s*\(|\bfetch\s*\(|XMLHttpRequest|\.submit\(|\/api\/pick/);
