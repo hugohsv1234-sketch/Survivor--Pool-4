@@ -135,10 +135,77 @@ def _score(value):
     if value in (None, ""): return None
     return int(float(value))
 
-def espn_snapshot(season=None):
+# Display-only odds. Public ESPN endpoints may omit them or change without notice.
+# Never use them for Survivor outcomes or as a sportsbook transaction feed.
+ESPN_ODDS_URL = ("https://sports.core.api.espn.com/v2/sports/football/"
+                 "leagues/nfl/events/{event}/competitions/{competition}/odds")
+
+
+def _espn_line(records):
+    """Validate an ESPN odds record without trusting its text or numeric values."""
+    if isinstance(records, dict):
+        records = records.get("items", [records])
+    if not isinstance(records, list):
+        return None
+    for row in records:
+        if not isinstance(row, dict):
+            continue
+        provider = row.get("provider") or {}
+        provider = provider.get("name", "") if isinstance(provider, dict) else ""
+        provider = str(provider)[:48] if provider else "ESPN-Daten"
+        provider = "".join(ch for ch in provider if ch.isprintable() and ch not in "<>{}").strip() or "ESPN-Daten"
+
+        def valid_num(value, lo, hi):
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                return None
+            if not math.isfinite(value) or not lo <= value <= hi:
+                return None
+            return value
+
+        def moneyline(side):
+            obj = row.get(side) or {}
+            if not isinstance(obj, dict):
+                return None
+            value = valid_num(obj.get("moneyLine"), -100000, 100000)
+            return int(value) if value is not None and abs(value) >= 100 and value != 0 else None
+
+        home = moneyline("homeTeamOdds")
+        away = moneyline("awayTeamOdds")
+        total = valid_num(row.get("overUnder"), 0.5, 150)
+        spread = valid_num(row.get("spread"), -100, 100)
+        details = row.get("details")
+        details = str(details).strip()[:60] if isinstance(details, str) else ""
+        details = "".join(ch for ch in details if ch.isprintable() and ch not in "<>{}")
+        if all(v is None for v in (home, away, total, spread)) and not details:
+            continue
+        return {
+            "provider": provider,
+            "details": details,
+            "total": total,
+            "spread": spread,
+            "home_moneyline": home,
+            "away_moneyline": away,
+        }
+    return None
+
+
+def _espn_core_line(event_id, competition_id):
+    # Fixed trusted ESPN host, only numeric event IDs supplied by ESPN itself.
+    if not re.fullmatch(r"[0-9]{6,12}", str(event_id)) or not re.fullmatch(r"[0-9]{6,12}", str(competition_id)):
+        return None
+    try:
+        payload = _espn_json(ESPN_ODDS_URL.format(event=event_id, competition=competition_id))
+        return _espn_line(payload)
+    except (OSError, ValueError, TypeError, KeyError):
+        return None
+
+
+def espn_snapshot(season=None, include_odds=False):
     """Normalize ESPN's public NFL scoreboard into the pool's internal feed shape."""
     season = int(season or datetime.now().year)
     games = []
+    inline_odds = {}
+    competition_ids = {}
     weeks_with_games = set()
     # Regular season = weeks 1-18. Postseason maps to pool weeks 19-22.
     requests = [(2, w, w) for w in range(1, 19)] + [(3, w, 18 + w) for w in range(1, 5)]
@@ -160,6 +227,14 @@ def espn_snapshot(season=None):
             status = _espn_status(comp.get("status") or event.get("status"))
             kickoff = event.get("date") or comp.get("date")
             if not kickoff: continue
+            event_id = str(event.get("id"))
+            competition_id = str(comp.get("id") or event_id)
+            if include_odds and re.fullmatch(r"[0-9]{6,12}", event_id):
+                game_key = "espn_" + event_id
+                competition_ids[game_key] = (event_id, competition_id, pool_week, status)
+                line = _espn_line(comp.get("odds"))
+                if line:
+                    inline_odds[game_key] = line
             games.append({
                 "id": "espn_" + str(event.get("id")),
                 "week": pool_week,
@@ -176,14 +251,62 @@ def espn_snapshot(season=None):
     future = sorted({g["week"] for g in games if utc_timestamp(g["kickoff"]) > now and g["status"] == "scheduled"})
     active = sorted({g["week"] for g in games if g["status"] == "live"})
     current_week = active[0] if active else (future[0] if future else max(weeks_with_games))
-    return {"season": season, "current_week": current_week, "games": games}
+    snapshot = {"season": season, "current_week": current_week, "games": games}
+    return (snapshot, inline_odds, competition_ids) if include_odds else snapshot
+
 
 def refresh_espn(store, season=None):
-    """Refresh schedule/scores from ESPN. Previous good data survive any provider failure."""
+    """Update free public ESPN fixtures plus optional display-only betting lines.
+
+    Missing/blocked odds never block game results. Core odds requests are limited
+    to once every 30 minutes, and never expose pool participants' picks.
+    """
     try:
-        apply_snapshot(store, espn_snapshot(season))
+        snapshot, inline_lines, event_ids = espn_snapshot(season, include_odds=True)
+        apply_snapshot(store, snapshot)
+        now = time.time()
         with store.transaction() as db:
             store.set(db, "source", "espn")
+            settings = store.settings(db)
+            previous = settings.get("espn_odds") or {}
+            if not isinstance(previous, dict) or settings.get("espn_odds_season") != snapshot["season"]:
+                previous = {}
+            # Discard old lines rather than silently showing stale betting values.
+            lines = {gid: line for gid, line in previous.items()
+                     if isinstance(line, dict) and isinstance(line.get("updated_at"), (int, float))
+                     and 0 <= now - line["updated_at"] < 3600}
+            for gid, line in inline_lines.items():
+                lines[gid] = {**line, "updated_at": now}
+            last_core = settings.get("espn_odds_last_core") or 0
+            fetch_core = not isinstance(last_core, (int, float)) or now - last_core > 1800
+            if fetch_core:
+                store.set(db, "espn_odds_last_core", now)
+
+        if fetch_core:
+            # Only current week's games, limited workers, no paid API and no key.
+            # ESPN sometimes omits lines from scoreboard but exposes them via Core.
+            from concurrent.futures import ThreadPoolExecutor, as_completed
+            missing = [(gid, ids[0], ids[1]) for gid, ids in event_ids.items()
+                       if ids[2] == snapshot["current_week"]
+                       and ids[3] in ("scheduled", "live") and gid not in inline_lines]
+            missing = missing[:16]
+            try:
+                with ThreadPoolExecutor(max_workers=6) as pool:
+                    futures = {pool.submit(_espn_core_line, ev, comp): gid
+                               for gid, ev, comp in missing}
+                    for future in as_completed(futures):
+                        try:
+                            line = future.result()
+                        except Exception:
+                            line = None
+                        if line:
+                            lines[futures[future]] = {**line, "updated_at": now}
+            except Exception as exc:
+                print(f"ESPN odds temporarily unavailable: {exc}", flush=True)
+
+        with store.transaction() as db:
+            store.set(db, "espn_odds", lines)
+            store.set(db, "espn_odds_season", snapshot["season"])
         return True
     except Exception as exc:
         print(f"ESPN refresh failed: {exc}", flush=True)
