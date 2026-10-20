@@ -274,7 +274,10 @@ class ApiTests(unittest.TestCase):
                 break
         self.assertIsNotNone(selected, "A non-used valid team must remain pickable")
         current=self.client.state()["me"]["stats"]
-        self.assertEqual(current["total"], before["total"]+1)
+        # An imported historical Week 6 pick is replaced by the real Week 6
+        # pick; this must count as ONE pick, never double-count either one.
+        self.assertEqual(current["total"], before["total"])
+        self.assertEqual(current["losses"], before["losses"]-1)
         self.assertFalse(current["survivor"])
         self.assertEqual(self.client.call("/api/demo", {
             "action": "finish", "game_id": selected["id"], "winner": "away"
