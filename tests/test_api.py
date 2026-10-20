@@ -9,10 +9,12 @@ import tempfile
 import time
 import unittest
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timedelta, timezone
+from unittest.mock import patch
 from pathlib import Path
 from backend.app import App
 from backend.security import hash_password, verify_password
-from backend.providers import apply_snapshot, refresh, utc_timestamp
+from backend.providers import apply_snapshot, refresh, refresh_espn, _espn_line, utc_timestamp
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -280,6 +282,66 @@ class ApiTests(unittest.TestCase):
             db.execute("INSERT INTO rate_limits VALUES(?,29,?)",("/api/gate:127.0.0.1",time.time()+900))
         self.assertEqual(self.client.call("/api/gate",{"password":"wrong"})[0],401)
         self.assertEqual(self.client.gate()[0],429)
+
+    def test_espn_odds_parsing_validates_and_sanitizes(self):
+        self.assertIsNone(_espn_line([]))
+        self.assertIsNone(_espn_line([{"homeTeamOdds":{"moneyLine":True}}]))
+        self.assertIsNone(_espn_line([{"overUnder":float("nan")}]))
+        line = _espn_line([{"provider":{"name":"Test<script>"},
+                            "details":"BAL -3.5<script>",
+                            "overUnder":45.5,
+                            "awayTeamOdds":{"moneyLine":135},
+                            "homeTeamOdds":{"moneyLine":-150}}])
+        self.assertEqual(line["provider"], "Testscript")
+        self.assertEqual(line["details"], "BAL -3.5script")
+        self.assertEqual((line["away_moneyline"], line["home_moneyline"]), (135, -150))
+        self.assertEqual(line["total"], 45.5)
+
+    def test_espn_odds_optional_and_official_schedule_kept(self):
+        self.login()
+        date = (datetime.now(timezone.utc) + timedelta(days=14)).isoformat()
+        def fake_event(id, away, home, inline):
+            comp = {
+                "id": id,
+                "status":{"type":{"name":"STATUS_SCHEDULED","state":"pre"}},
+                "competitors":[
+                    {"homeAway":"away","team":{"abbreviation":away}},
+                    {"homeAway":"home","team":{"abbreviation":home}}],
+            }
+            if inline:
+                comp["odds"] = [{"provider":{"name":"DraftKings"},
+                                 "details":"CIN -2.5","overUnder":43.5,
+                                 "awayTeamOdds":{"moneyLine":135},
+                                 "homeTeamOdds":{"moneyLine":-155}}]
+            return {"id":id,"date":date,"competitions":[comp]}
+        requests = []
+        def fake_feed(url, timeout=10):
+            requests.append(url)
+            if "sports.core.api.espn.com" in url:
+                return {"items":[{"provider":{"name":"FanDuel"},
+                                  "details":"TEN -1.5","overUnder":41.5,
+                                  "awayTeamOdds":{"moneyLine":110},
+                                  "homeTeamOdds":{"moneyLine":-125}}]}
+            if "seasontype=2&week=7" in url:
+                return {"events":[fake_event("401777701","BAL","CIN",True),
+                                  fake_event("401777702","JAX","TEN",False)]}
+            return {"events":[]}
+        with patch("backend.providers._espn_json", side_effect=fake_feed):
+            self.assertTrue(refresh_espn(self.app.store, 2026))
+        state = self.client.state()
+        first = next(g for g in state["games"] if g["id"] == "espn_401777701")
+        second = next(g for g in state["games"] if g["id"] == "espn_401777702")
+        self.assertEqual(first["espn_odds"]["provider"], "DraftKings")
+        self.assertEqual(first["espn_odds"]["total"], 43.5)
+        self.assertEqual(second["espn_odds"]["provider"], "FanDuel")
+        self.assertEqual(second["espn_odds"]["away_moneyline"], 110)
+        self.assertEqual(len([url for url in requests if "sports.core.api.espn.com" in url]), 1)
+        # When no odds are published, schedule/scores still refresh normally.
+        with patch("backend.providers._espn_json", return_value={"events":[]}):
+            self.assertFalse(refresh_espn(self.app.store, 2026))
+        self.assertEqual(next(g for g in self.client.state()["games"]
+                              if g["id"] == "espn_401777701")["espn_odds"]["provider"],
+                         "DraftKings")
 
     def test_public_assets_and_pwa_cache_exclusion(self):
         for path in ("/","/css/app.css","/js/app.js","/manifest.json","/service-worker.js","/icons/icon-192.png","/icons/icon-512.png"):
