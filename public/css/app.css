@@ -4157,3 +4157,186 @@ input,select,textarea{background:#0b233c!important;border-color:#386b9c!importan
 .team-logo-wrap img.team-logo[hidden]{display:none!important;}
 .team-logo-wrap .logo-fallback[hidden]{display:none!important;}
 .team-logo-wrap .logo-fallback:not([hidden]){display:flex!important;}
+
+
+/* STADIUM MOTION / 2026: cohesive red + navy broadcast design, progressive enhancement.
+   Motion is disabled for reduced-motion and intentionally gentle on mobile. */
+:root{
+ --motion-red:#f83b65; --motion-blue:#469af2; --motion-ice:#abd8ff;
+ --motion-ink:#071323; --motion-pink:#f2c0d0;
+ --motion-ease:cubic-bezier(.2,.75,.22,1);
+}
+body{
+ background:
+   radial-gradient(ellipse 48% 40% at 96% 3%,#16487935,transparent 80%),
+   radial-gradient(ellipse 65% 55% at 10% 100%,#b6274922,transparent 80%),
+   #061220!important;
+}
+.workspace,.content{min-width:0}
+.topbar{
+ border-bottom:1px solid #437bac46!important;
+ box-shadow:0 10px 30px #0107114f;
+ backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px)
+}
+.sidebar{
+ box-shadow:inset -1px 0 #468ddd37,12px 0 35px #0003!important;
+ background:linear-gradient(170deg,#081a2d,#050e1b 70%,#0a1e33)!important;
+}
+.sidebar .brand-symbol{box-shadow:0 0 28px #e7386c35!important}
+.nav-link{position:relative;isolation:isolate;transition:background .25s var(--motion-ease),color .25s ease,translate .24s var(--motion-ease),border-color .24s ease!important}
+.nav-link:before{
+ content:"";position:absolute;left:0;top:15%;bottom:15%;width:3px;border-radius:4px;
+ background:#f63f67;box-shadow:0 0 16px #f83b65aa;
+ transform:scaleY(0);transition:transform .23s var(--motion-ease)
+}
+.nav-link.active:before,.nav-link[aria-current="page"]:before{transform:scaleY(1)}
+@media(hover:hover) and (pointer:fine){
+ .nav-link:hover{translate:3px 0}
+ .nav-link:hover:before{transform:scaleY(.75)}
+}
+.cinematic-dashboard .paetzold-stadium-hero{
+ position:relative!important;overflow:hidden!important;isolation:isolate;
+ border:1px solid #4d86b4!important;
+ box-shadow:0 22px 60px #010712a8,inset 0 0 58px #0008,0 0 32px #2c6fa71b!important;
+}
+.cinematic-dashboard .paetzold-stadium-hero:after{
+ content:"";position:absolute;inset:-20%;z-index:0;pointer-events:none;
+ background:linear-gradient(108deg,transparent 27%,#ddecff12 47%,transparent 61%);
+ transform:translateX(-100%) rotate(-4deg);
+ animation:motion-floodlight 15s ease-in-out infinite
+}
+.cinematic-dashboard .paetzold-stadium-hero .stadium-stands{opacity:.8}
+.cinematic-dashboard .paetzold-stadium-hero .paetzold-player{
+ will-change:auto;
+ filter:drop-shadow(5px 0 18px #0007)!important;
+ transition:scale .6s var(--motion-ease),filter .6s var(--motion-ease)!important
+}
+@media(hover:hover) and (pointer:fine){
+ .cinematic-dashboard .paetzold-stadium-hero:hover .paetzold-player{scale:1.025;filter:drop-shadow(6px 0 26px #e52d5736)!important}
+}
+.cinematic-dashboard .paetzold-stadium-hero h1{
+ text-wrap:nowrap;filter:drop-shadow(0 6px 15px #0006)
+}
+.cinematic-dashboard .paetzold-stadium-hero .stadium-kicker{
+ color:#b6d7f5!important;font-weight:800!important
+}
+.cinematic-dashboard .paetzold-stadium-hero .stadium-banner-copy p{color:#eec4d0!important}
+.cinematic-dashboard .stats-grid{gap:14px!important;}
+.cinematic-dashboard .stats-grid .stat-card{
+ position:relative;isolation:isolate;overflow:hidden;
+ background:linear-gradient(156deg,#0d2743,#071729 80%)!important;
+ border:1px solid #346f9f!important;
+ border-radius:14px!important;
+ box-shadow:inset 0 1px #edf7ff0b,0 9px 28px #0005!important
+}
+.cinematic-dashboard .stats-grid .stat-card:before{
+ content:"";pointer-events:none;position:absolute;inset:0;z-index:-1;
+ background:radial-gradient(270px circle at var(--spot-x,50%) var(--spot-y,0%),#5a9ef020,transparent 75%);
+ opacity:0;transition:opacity .3s ease
+}
+.cinematic-dashboard .stats-grid .stat-card:nth-child(2):before{background:radial-gradient(270px circle at var(--spot-x,50%) var(--spot-y,0%),#f43f6422,transparent 75%)}
+.cinematic-dashboard .stats-grid .stat-card strong{color:#f5d2dc!important;font-variant-numeric:tabular-nums}
+.cinematic-dashboard .stats-grid .stat-card>div span{color:#efd0d9!important}
+.cinematic-dashboard .stats-grid .stat-card>small{color:#9ec7ed!important}
+.cinematic-dashboard .broadcast-layout>section,.ranking-panel,.recent-panel,.season-panel,.history-panel,.account-settings-panel{
+ border-radius:14px!important;border-color:#3673a5!important;
+ box-shadow:0 14px 40px #0107125b,inset 0 1px #ffffff08!important;
+}
+.cinematic-dashboard .game-card,.stat-card,.inventory-team,.leaderboard-row,.ranking-panel,.history-pick{
+ --tilt-x:0deg;--tilt-y:0deg;
+ transition:transform .28s var(--motion-ease),border-color .25s ease,box-shadow .25s ease,background-color .25s ease!important;
+ transform:perspective(900px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+ transform-style:preserve-3d;backface-visibility:hidden;
+}
+.cinematic-dashboard .game-card{
+ position:relative;isolation:isolate;
+ background:linear-gradient(150deg,#0d2740,#071624)!important;
+ border:1px solid #356b97!important;border-radius:11px!important;
+}
+.cinematic-dashboard .game-card:before{
+ content:"";pointer-events:none;position:absolute;inset:0;z-index:-1;
+ background:radial-gradient(240px circle at var(--spot-x,50%) var(--spot-y,0%),#5db6ff24,transparent 75%);
+ opacity:0;transition:opacity .25s ease
+}
+.cinematic-dashboard .game-card .game-card-head{background:#112d49!important}
+.cinematic-dashboard .game-card .team-choice{transition:background .2s ease,border-color .2s ease,transform .2s var(--motion-ease)!important}
+.cinematic-dashboard .ranking-panel .mini-player{
+ transition:background .2s ease,translate .25s var(--motion-ease)!important;
+ border-radius:8px
+}
+.cinematic-dashboard .ranking-panel .mini-player.is-me{
+ background:linear-gradient(90deg,#173d62,#0d2238)!important;
+ outline:1px solid #538abb8c
+}
+.team-logo-wrap{transition:scale .25s var(--motion-ease),box-shadow .25s ease!important;}
+.button,.nav-link,.inventory-team,.team-choice,.game-card,.stat-card,.sidebar-user,.panel-link,.filter-button,.segmented button{
+ -webkit-tap-highlight-color:transparent;
+ touch-action:manipulation;
+}
+.button,.nav-link,.inventory-team,.team-choice,.sidebar-user,.panel-link,.filter-button,.segmented button{
+ position:relative;isolation:isolate;
+}
+.motion-tap-ripple{
+ position:absolute;z-index:10;pointer-events:none;left:0;top:0;
+ border-radius:50%;background:#c9e5ff55;
+ transform:translate(-50%,-50%) scale(0);
+ animation:motion-ripple .56s ease-out forwards
+}
+button,.nav-link,.sidebar-user,.game-card,.stat-card,.inventory-team,.panel-link{
+ overflow:hidden;
+}
+.button.primary,.button.dark{
+ background:linear-gradient(110deg,#fa496c,#d62d52)!important;
+ box-shadow:0 4px 20px #f03b5f25!important;
+ transition:transform .22s var(--motion-ease),box-shadow .22s ease,filter .22s ease!important
+}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{
+ outline:2px solid #8dc9ff!important;outline-offset:3px!important
+}
+@media(hover:hover) and (pointer:fine){
+ .cinematic-dashboard .game-card:hover,.stat-card:hover,.inventory-team:hover{
+   border-color:#6ab9fa!important;
+   box-shadow:0 17px 42px #010b1acc,0 0 24px #4299e52a!important
+ }
+ .cinematic-dashboard .game-card:hover:before,.cinematic-dashboard .stats-grid .stat-card:hover:before{opacity:1}
+ .cinematic-dashboard .game-card:hover .team-logo-wrap,.team-choice:hover .team-logo-wrap{scale:1.065}
+ .cinematic-dashboard .ranking-panel .mini-player:hover{translate:4px 0;background:#15334d!important}
+ .button.primary:hover,.button.dark:hover{filter:brightness(1.1);transform:translateY(-3px);box-shadow:0 10px 30px #ff416553!important}
+ .sidebar-user:hover,.panel-link:hover{background:#173959!important;box-shadow:0 5px 16px #0004}
+}
+button:active:not(:disabled),.team-choice:active,.inventory-team:active,.panel-link:active{
+ scale:.975;
+}
+.cinematic-dashboard .stadium-banner,
+.cinematic-dashboard .stats-grid,
+.cinematic-dashboard .broadcast-layout>section,
+.cinematic-dashboard .broadcast-layout>.dashboard-aside{
+ animation:motion-reveal .55s var(--motion-ease) both
+}
+.cinematic-dashboard .stats-grid{animation-delay:.07s}
+.cinematic-dashboard .broadcast-layout>section{animation-delay:.14s}
+.cinematic-dashboard .dashboard-aside{animation-delay:.2s}
+.cinematic-dashboard .stats-grid .stat-card:nth-child(2){animation-delay:.05s}
+.cinematic-dashboard .stats-grid .stat-card:nth-child(3){animation-delay:.1s}
+.cinematic-dashboard .stats-grid .stat-card:nth-child(4){animation-delay:.15s}
+.account-shell .auth-card{animation:motion-reveal .5s var(--motion-ease) both}
+dialog[open]{animation:motion-dialog .23s var(--motion-ease) both}
+dialog::backdrop{background:#020713c8;backdrop-filter:blur(7px)}
+#toast.show{animation:motion-toast .25s var(--motion-ease) both}
+@keyframes motion-reveal{from{opacity:0;translate:0 15px}to{opacity:1;translate:0 0}}
+@keyframes motion-dialog{from{opacity:0;translate:0 14px;scale:.97}to{opacity:1;translate:0 0;scale:1}}
+@keyframes motion-toast{from{opacity:0;translate:0 12px}to{opacity:1;translate:0 0}}
+@keyframes motion-floodlight{0%,26%{transform:translateX(-110%) rotate(-4deg)}57%,100%{transform:translateX(110%) rotate(-4deg)}}
+@keyframes motion-ripple{0%{opacity:.9;transform:translate(-50%,-50%) scale(0)}100%{opacity:0;transform:translate(-50%,-50%) scale(1)}}
+@media(max-width:760px){
+ .cinematic-dashboard .stats-grid{gap:9px!important}
+ .cinematic-dashboard .stats-grid .stat-card{border-radius:11px!important}
+ .cinematic-dashboard .paetzold-stadium-hero:after{animation-duration:19s;opacity:.4}
+ .cinematic-dashboard .game-card,.stat-card,.inventory-team{transform:none!important}
+ .cinematic-dashboard .game-card:active,.inventory-team:active{background:#183b60!important}
+}
+@media(prefers-reduced-motion:reduce){
+ *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;}
+ .cinematic-dashboard .game-card,.stat-card,.inventory-team,.leaderboard-row,.ranking-panel,.history-pick{transform:none!important}
+ .motion-tap-ripple{display:none!important}
+}
