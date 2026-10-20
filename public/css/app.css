@@ -4340,3 +4340,53 @@ dialog::backdrop{background:#020713c8;backdrop-filter:blur(7px)}
  .cinematic-dashboard .game-card,.stat-card,.inventory-team,.leaderboard-row,.ranking-panel,.history-pick{transform:none!important}
  .motion-tap-ripple{display:none!important}
 }
+
+
+/* Uploaded original NFL logo sheet: 8 columns x 4 rows, 32 blue-rimmed circles.
+   These are the user's real assets at /icons/nfl-logo-sprite.png.
+   Never layer remote ESPN images or text behind the crest. */
+.team-logo-wrap,
+.team-logo-wrap.large,
+.team-logo-wrap.tiny{
+  position:relative!important;
+  display:inline-flex!important;
+  justify-content:center!important;
+  align-items:center!important;
+  flex:0 0 auto!important;
+  border-radius:50%!important;
+  overflow:hidden!important;
+  padding:0!important;
+  background:#ffffff!important;
+  border:2px solid #4caffc!important;
+  box-shadow:0 0 0 2px #092747,0 4px 13px #020b1c8c!important;
+  box-sizing:border-box!important;
+  aspect-ratio:1 / 1!important;
+}
+.team-logo-wrap{width:64px!important;height:64px!important;}
+.team-logo-wrap.large{width:86px!important;height:86px!important;border-width:3px!important;}
+.team-logo-wrap.tiny{width:34px!important;height:34px!important;border-width:1.5px!important;}
+.team-logo-wrap .reference-logo{
+  position:absolute!important;
+  inset:0!important;
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  border:0!important;
+  border-radius:50%!important;
+  background-image:url('/icons/nfl-logo-sprite.png')!important;
+  background-size:800% 400%!important;
+  background-repeat:no-repeat!important;
+  background-color:#fff!important;
+  filter:none!important;
+  mix-blend-mode:normal!important;
+  pointer-events:none!important;
+  transform:none!important;
+}
+@media(hover:hover) and (pointer:fine){
+  .team-logo-wrap:hover{box-shadow:0 0 0 2px #0b2b50,0 0 22px #57adfb6a!important;}
+}
+@media(max-width:620px){
+  .team-logo-wrap{width:52px!important;height:52px!important;}
+  .team-logo-wrap.large{width:67px!important;height:67px!important;}
+  .team-logo-wrap.tiny{width:30px!important;height:30px!important;}
+}
