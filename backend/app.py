@@ -332,6 +332,11 @@ class App:
                     db.execute("UPDATE historical_picks SET result=? WHERE user_id=? AND season=? AND week=6 AND matchup=? AND result='pending'",
                                ("win" if status == "g" else "loss", ids[0], settings["season"], matchup))
         history = [dict(h) for h in db.execute("SELECT * FROM historical_picks WHERE season=? AND week<=? ORDER BY week", (settings["season"], settings["current_week"]))]
+        # A formerly unique display name may have become ambiguous later.
+        # Keep stored data intact, but only show/count historic results for
+        # players whose current display name is uniquely matched.
+        unique_history_ids = {ids[0] for ids in known.values() if len(ids) == 1}
+        history = [h for h in history if h["user_id"] in unique_history_ids]
         picks = [dict(p) for p in db.execute("SELECT * FROM picks WHERE season=? ORDER BY week", (settings["season"],))]
         public = []
         for pick in picks:
