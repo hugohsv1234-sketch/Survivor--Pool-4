@@ -248,6 +248,42 @@ class ApiTests(unittest.TestCase):
         self.assertIn(5,d["me"]["stats"]["missed"])
         self.assertFalse(d["me"]["stats"]["survivor"])
 
+    def test_season_and_rankings_continue_even_after_everyone_eliminated(self):
+        self.login()
+        # All demo users missed week 5 and are eliminated when week 6 begins.
+        self.assertEqual(self.client.call("/api/demo", {"action":"next_week"})[0], 200)
+        data = self.client.state()
+        self.assertEqual(data["current_week"], 6)
+        self.assertEqual(len(data["players"]), 6)
+        self.assertTrue(all(not p["stats"]["survivor"] for p in data["players"]))
+        self.assertTrue(data["rules"]["allow_after_elimination"])
+        # Even an old/admin request to disable post-elimination picking cannot
+        # silently stop the public pool from continuing through the season.
+        settings={"tie_is_loss":True,"allow_after_elimination":False,"missing_pick_eliminates":True}
+        self.assertEqual(self.client.call("/api/settings", settings)[0], 200)
+        self.assertTrue(self.client.state()["rules"]["allow_after_elimination"])
+        before=self.client.state()["me"]["stats"]
+        selected = None
+        for game in self.client.state()["games"]:
+            if game["week"] != 6 or game["status"] != "scheduled":
+                continue
+            response = self.client.call("/api/pick", {"game_id": game["id"], "team": game["away"]})
+            if response[0] == 200:
+                selected = game
+                break
+        self.assertIsNotNone(selected, "A non-used valid team must remain pickable")
+        current=self.client.state()["me"]["stats"]
+        self.assertEqual(current["total"], before["total"]+1)
+        self.assertFalse(current["survivor"])
+        self.assertEqual(self.client.call("/api/demo", {
+            "action": "finish", "game_id": selected["id"], "winner": "away"
+        })[0], 200)
+        updated=self.client.state()
+        self.assertEqual(updated["me"]["stats"]["wins"],before["wins"]+1)
+        self.assertFalse(updated["me"]["stats"]["survivor"])
+        self.assertEqual(self.client.call("/api/demo", {"action":"next_week"})[0], 200)
+        self.assertEqual(self.client.state()["current_week"],7)
+
     def test_concurrent_requests_leave_exactly_one_pick(self):
         self.login()
         cookie,csrf = self.client.cookie,self.client.csrf
