@@ -114,9 +114,9 @@ ESPN_TEAM_MAP = {
     "NYJ":"NYJ","PHI":"PHI","PIT":"PIT","SF":"SF","SEA":"SEA","TB":"TB","TEN":"TEN","WSH":"WAS","WAS":"WAS"
 }
 
-def _espn_json(url):
+def _espn_json(url, timeout=10):
     request = urllib.request.Request(url, headers={"Accept":"application/json","User-Agent":"SurvivorPool/2.0"})
-    with urllib.request.urlopen(request, timeout=10) as response:
+    with urllib.request.urlopen(request, timeout=timeout) as response:
         raw = response.read(4_000_001)
         if len(raw) > 4_000_000:
             raise ValueError("ESPN-Antwort zu groß")
@@ -194,7 +194,7 @@ def _espn_core_line(event_id, competition_id):
     if not re.fullmatch(r"[0-9]{6,12}", str(event_id)) or not re.fullmatch(r"[0-9]{6,12}", str(competition_id)):
         return None
     try:
-        payload = _espn_json(ESPN_ODDS_URL.format(event=event_id, competition=competition_id))
+        payload = _espn_json(ESPN_ODDS_URL.format(event=event_id, competition=competition_id), timeout=3)
         return _espn_line(payload)
     except (OSError, ValueError, TypeError, KeyError):
         return None
@@ -278,7 +278,8 @@ def refresh_espn(store, season=None):
             for gid, line in inline_lines.items():
                 lines[gid] = {**line, "updated_at": now}
             last_core = settings.get("espn_odds_last_core") or 0
-            fetch_core = not isinstance(last_core, (int, float)) or now - last_core > 1800
+            fetch_core = (settings.get("espn_odds_season") != snapshot["season"] or
+                          not isinstance(last_core, (int, float)) or now - last_core > 1800)
             if fetch_core:
                 store.set(db, "espn_odds_last_core", now)
 
