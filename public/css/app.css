@@ -4561,3 +4561,337 @@ dialog::backdrop{background:#020713c8;backdrop-filter:blur(7px)}
 @media(prefers-reduced-motion:reduce){
   .public-bets-bar i,.public-bets-bar b{transition:none!important;}
 }
+
+
+/* 2026 clarity pass — no external font provider / no animation regressions.
+   Modern condensed sports headings, crisp readable body text and panels. */
+:root{
+  --ui-type:"Bahnschrift","Avenir Next","Segoe UI Variable","Segoe UI",Roboto,Arial,sans-serif;
+  --ui-display:"Bahnschrift SemiCondensed","DIN Condensed","Arial Narrow",Impact,"Roboto Condensed",sans-serif;
+  --ui-pale:#f3c7d4;
+  --ui-secondary:#b7d2ec;
+  --ui-blue:#5eaafa;
+  --ui-red:#f24a6d;
+}
+html{
+  text-rendering:optimizeLegibility;
+  -webkit-text-size-adjust:100%;
+  font-kerning:normal;
+}
+body,button,input,select,textarea,
+.sidebar,.topbar,.content,.page-content,.panel,.game-card{
+  font-family:var(--ui-type)!important;
+  -webkit-font-smoothing:auto;
+  -moz-osx-font-smoothing:auto;
+  text-rendering:optimizeLegibility;
+}
+h1,h2,h3,h4,.page-heading h1,.section-heading h2,
+.broadcast-pick-title h2,.ranking-panel h2,.recent-panel h2,
+.auth-card h1,.auth-story h1{
+  font-family:var(--ui-display)!important;
+  font-weight:850!important;
+  font-stretch:semi-condensed;
+  font-synthesis:weight;
+  letter-spacing:.012em!important;
+}
+.cinematic-dashboard .paetzold-stadium-hero h1{
+  font-family:var(--ui-display)!important;
+  font-weight:900!important;
+  letter-spacing:-.025em!important;
+}
+.page-content p,.page-content a,.page-content button,
+.page-content label,.page-content td,.page-content th,
+.page-content .muted{
+  line-height:1.48;
+}
+.page-content small,.page-content .small,
+.sidebar small,.nav-link,.pool-label,
+.page-footer,.breadcrumb,.broadcast-week-tag,
+.broadcast-pick-title p,.game-card-head,.match-status,
+.team-city,.team-side,.team-availability,
+.hero-main .hero-sub,.hero-main .hero-top,
+.recent-pick b,.recent-pick .week-small,
+.mini-player b,.mini-player small,.mini-player .rank,
+.leaderboard-header,.leader-player small,.leaderboard-row>strong small,
+.stat-card>small,.stat-card>div span,
+.pool-pick-rate,.pool-pick-rate-heading span,
+.public-bets-widget,.public-bets-heading small,
+.public-bets-source,.season-panel .table-hint{
+  font-size:max(12px,.75rem)!important;
+  line-height:1.38!important;
+  letter-spacing:.005em!important;
+  font-weight:600!important;
+}
+.pool-label small,.stadium-kicker,.eyebrow,.page-heading .eyebrow,
+.game-card .team-side,.stat-card>small,.broadcast-week-tag{
+  letter-spacing:.07em!important;
+}
+.page-content .muted,.page-content .table-hint,
+.page-footer,.page-content .eyebrow,
+.game-card .team-city,.page-content small{
+  color:var(--ui-secondary)!important;
+}
+.page-content .mini-player strong,
+.page-content .leader-player b,
+.page-content .recent-pick b,
+.page-content .team-choice strong,
+.page-content .section-heading h2,
+.page-content .broadcast-pick-title h2{
+  color:var(--ui-pale)!important;
+}
+.recent-pick .result-loss{color:#ff6c87!important;}
+.recent-pick .result-win{color:#9acfff!important;}
+.page-content .stat-card>strong{
+  font-family:var(--ui-type)!important;
+  color:#f6d0db!important;
+  font-weight:900!important;
+  font-variant-numeric:tabular-nums!important;
+}
+.cinematic-dashboard .ranking-panel,
+.cinematic-dashboard .recent-panel,
+.cinematic-dashboard .dashboard-aside>.panel,
+.profile-grid .panel,.leaderboard-panel,.season-panel,
+.account-settings-panel{
+  border:1px solid #417ca9!important;
+  border-radius:19px!important;
+  background:linear-gradient(160deg,#0d2743 0%,#081b30 95%)!important;
+  box-shadow:0 15px 38px #01091483,inset 0 1px #a3caff0d!important;
+  overflow:hidden;
+}
+.cinematic-dashboard .ranking-panel .section-heading,
+.cinematic-dashboard .recent-panel .section-heading{
+  padding-bottom:15px;
+  margin-bottom:8px;
+  border-bottom:1px solid #376e9982;
+}
+.cinematic-dashboard .ranking-panel .mini-player{
+  display:grid!important;
+  grid-template-columns:23px 34px minmax(0,1fr) minmax(30px,max-content)!important;
+  align-items:center!important;gap:9px!important;
+  min-height:57px!important;padding:9px 8px!important;
+  border-bottom:1px solid #32658a78!important;
+  border-radius:10px!important;
+  transform-style:flat;
+}
+.cinematic-dashboard .ranking-panel .mini-player:last-child{border-bottom:0!important;}
+.cinematic-dashboard .ranking-panel .mini-player>.rank{
+  position:relative!important;
+  display:inline-flex!important;align-items:center!important;
+  justify-content:center!important;
+  width:23px!important;min-width:23px!important;flex:0 0 23px!important;
+  white-space:nowrap;
+}
+.cinematic-dashboard .ranking-panel .mini-player .rank-crown{
+  position:absolute!important;
+  font-size:13px!important;
+  right:-7px!important;top:-13px!important;
+  color:#f14b71!important;line-height:1;
+  text-shadow:0 2px 6px #0008;
+}
+.cinematic-dashboard .ranking-panel .mini-player>.avatar,
+.cinematic-dashboard .ranking-panel .mini-player.is-me>.avatar{
+  display:inline-flex!important;
+  inline-size:34px!important;block-size:34px!important;
+  width:34px!important;height:34px!important;
+  min-width:34px!important;max-width:34px!important;
+  min-height:34px!important;max-height:34px!important;
+  flex:0 0 34px!important;
+  justify-self:center!important;
+  border-radius:50%!important;aspect-ratio:1/1!important;
+  padding:0!important;
+  overflow:hidden!important;
+  transform:none!important;scale:1!important;
+  background:#1b446d!important;border:1px solid #548bc5!important;
+}
+.cinematic-dashboard .ranking-panel .mini-player>.avatar .avatar-photo{
+  width:100%!important;height:100%!important;
+  object-fit:cover!important;border-radius:50%!important;
+}
+.cinematic-dashboard .ranking-panel .mini-player>.mini-player-name{
+  display:flex!important;flex-direction:column;
+  min-width:0!important;max-width:100%!important;
+  flex:1 1 auto!important;overflow:hidden;
+}
+.cinematic-dashboard .ranking-panel .mini-player .mini-player-name b{
+  font-size:13px!important;line-height:1.3!important;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.cinematic-dashboard .ranking-panel .mini-player .mini-player-name>small{
+  font-size:12px!important;line-height:1.3!important;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  color:#93b9dc!important;
+}
+.cinematic-dashboard .ranking-panel .mini-player>strong{
+  justify-self:end!important;text-align:right!important;
+  color:#eebecf!important;font-size:16px!important;
+  font-variant-numeric:tabular-nums!important;
+}
+.cinematic-dashboard .ranking-panel .mini-player>strong small{
+  font-size:12px!important;white-space:nowrap;
+  color:#a4c5df!important;
+}
+.cinematic-dashboard .ranking-panel .mini-player.is-me{
+  background:#163d60!important;border:1px solid #4f88b8!important;
+}
+.cinematic-dashboard .ranking-panel .panel-link,
+.cinematic-dashboard .recent-panel .panel-link{
+  display:flex;align-items:center;justify-content:space-between;
+  border:1px solid #4a85b7!important;
+  background:#112f50!important;
+  border-radius:12px!important;
+  padding:13px 15px!important;
+  margin-top:13px!important;
+  font-size:13px!important;font-weight:700!important;
+  color:#e5c3d1!important;
+}
+.cinematic-dashboard .recent-panel .recent-pick{
+  min-height:60px;
+  margin:10px 0!important;padding:11px 13px!important;
+  border:1px solid #396c978a!important;
+  border-radius:13px!important;
+  background:linear-gradient(100deg,#10314f,#0a2138)!important;
+  gap:10px!important;
+  display:flex;align-items:center;
+}
+.cinematic-dashboard .recent-panel .week-small{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:35px!important;min-width:35px!important;height:27px;
+  border-radius:7px!important;
+  font-size:12px!important;font-weight:800!important;
+  color:#d4e6ff!important;background:#18426a!important;
+}
+.cinematic-dashboard .recent-panel .recent-pick>b{
+  flex:1 1 auto;min-width:0;
+  font-size:13px!important;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.cinematic-dashboard .recent-panel .recent-pick .result-icon{
+  flex:0 0 18px;color:#fb6784;font-size:15px!important;text-align:center;
+}
+.leaderboard-panel .leaderboard-row,
+.leaderboard-panel .leaderboard-header{
+  grid-template-columns:minmax(195px,2.5fr) repeat(3,minmax(60px,.65fr))!important;
+  gap:clamp(8px,1.1vw,16px)!important;
+}
+.leaderboard-panel .leaderboard-header>span,
+.leaderboard-panel .leaderboard-row>.leader-player,
+.leaderboard-panel .leaderboard-row>strong{
+  min-width:0;
+}
+.leaderboard-panel .leaderboard-row>.leader-player>.avatar{
+  flex:0 0 37px!important;
+  width:37px!important;height:37px!important;
+  border-radius:50%!important;
+}
+.leaderboard-panel .leaderboard-row{
+  min-height:74px!important;
+  padding-block:15px!important;
+}
+.leaderboard-panel .leaderboard-row>strong{
+  font-size:19px!important;
+  font-variant-numeric:tabular-nums!important;
+  font-weight:850!important;
+}
+.leaderboard-panel .leaderboard-header{
+  border-bottom:1px solid #457dab!important;
+  border-radius:18px 18px 0 0;
+  background:#153657!important;
+}
+.leaderboard-panel .leaderboard-header>span{
+  font-size:12px!important;
+  letter-spacing:.06em!important;
+  color:#d7b8c9!important;
+}
+.season-continuation-note{
+  display:flex;align-items:flex-start;gap:11px;
+  background:linear-gradient(90deg,#103455,#0c253d);
+  border:1px solid #3f75a7;
+  padding:14px 16px;
+  border-radius:12px;
+  margin:17px 0;
+}
+.season-continuation-note .icon{width:19px;height:19px;color:#78c4ff;flex:0 0 auto;}
+.season-continuation-note span{display:block;}
+.season-continuation-note b{
+  display:block;color:#ebc3d0;font-size:14px;font-weight:850;
+}
+.season-continuation-note small{
+  display:block;color:#a9c9e8;font-size:12px;line-height:1.5;margin-top:3px;
+}
+/* Real sportsbook ticket shares, split between team crests and labels. */
+.public-bets-matchup{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(45px,.85fr) minmax(0,1fr);
+  align-items:center!important;gap:clamp(5px,.65vw,12px)!important;
+  min-width:0;width:100%;
+}
+.public-bets-matchup .public-bets-side{
+  display:flex!important;align-items:center!important;gap:6px!important;
+  min-width:0;
+}
+.public-bets-matchup .public-bets-away{justify-content:flex-start;}
+.public-bets-matchup .public-bets-home{justify-content:flex-end;text-align:right;}
+.public-bets-matchup .public-bets-team-info{
+  display:flex;flex-direction:column;gap:1px;min-width:0;
+}
+.public-bets-matchup .public-bets-team-info b{
+  color:#b8d4ef!important;
+  font-size:12px!important;font-weight:750!important;
+  text-overflow:ellipsis;overflow:hidden;white-space:nowrap;
+  max-width:100%;
+}
+.public-bets-matchup .public-bets-team-info strong{
+  color:#f1c4d2!important;font-weight:900!important;
+  font-size:clamp(15px,1.3vw,21px)!important;
+  font-variant-numeric:tabular-nums!important;
+}
+.public-bets-matchup .most .public-bets-team-info strong{color:#91caff!important;}
+.public-bets-matchup .team-logo-wrap.tiny{
+  width:31px!important;height:31px!important;
+  min-width:31px!important;flex:0 0 31px!important;
+}
+.public-bets-matchup .public-bets-bar{
+  width:100%;height:12px;border-radius:999px;
+  box-shadow:0 0 0 1px #477ba85c,inset 0 1px 3px #0009;
+}
+.public-bets-matchup .public-bets-bar>i,
+.public-bets-matchup .public-bets-bar>b{min-width:0;}
+.public-bets-widget .public-bets-heading strong{
+  font-size:12px!important;letter-spacing:.045em!important;
+}
+.public-bets-widget .public-bets-heading small,
+.public-bets-widget .public-bets-source{
+  font-size:12px!important;line-height:1.45!important;
+}
+@media(max-width:620px){
+  .leaderboard-panel .leaderboard-header{display:none!important;}
+  .leaderboard-panel .leaderboard-row{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:9px!important;padding:14px!important;
+  }
+  .leaderboard-panel .leaderboard-row>.leader-player{
+    grid-column:1/-1!important;grid-row:1!important;
+  }
+  .leaderboard-panel .leaderboard-row>strong{
+    grid-row:2!important;
+    text-align:center!important;padding:9px 4px!important;
+    border:1px solid #366e9a7d!important;
+    border-radius:10px!important;
+    background:#102c48!important;
+    font-size:18px!important;
+  }
+  .leaderboard-panel .leaderboard-row>strong small{
+    display:block!important;font-size:12px!important;
+    font-weight:700!important;
+  }
+  .public-bets-matchup{
+    grid-template-columns:minmax(0,1fr) minmax(42px,.9fr) minmax(0,1fr);
+    gap:5px!important;
+  }
+  .public-bets-matchup .team-logo-wrap.tiny{width:26px!important;height:26px!important;min-width:26px!important;flex:0 0 26px!important;}
+  .public-bets-matchup .public-bets-team-info b{font-size:12px!important;}
+  .public-bets-matchup .public-bets-team-info strong{font-size:15px!important;}
+}
+@media(prefers-reduced-motion:reduce){
+ .public-bets-matchup .public-bets-bar *{transition:none!important;}
+}
