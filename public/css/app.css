@@ -4390,3 +4390,58 @@ dialog::backdrop{background:#020713c8;backdrop-filter:blur(7px)}
   .team-logo-wrap.large{width:67px!important;height:67px!important;}
   .team-logo-wrap.tiny{width:30px!important;height:30px!important;}
 }
+
+
+/* Logo extraction: no circular frame, ring, backing plate or white background.
+   The actual transparent PNG is generated from the user's uploaded sprite. */
+.team-logo-wrap,
+.team-logo-wrap.large,
+.team-logo-wrap.tiny{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  flex:0 0 auto!important;
+  position:relative!important;
+  overflow:visible!important;
+  background:transparent!important;
+  border:none!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  padding:0!important;
+  outline:0!important;
+  vertical-align:middle!important;
+}
+.team-logo-wrap{width:64px!important;height:64px!important;}
+.team-logo-wrap.large{width:86px!important;height:86px!important;}
+.team-logo-wrap.tiny{width:34px!important;height:34px!important;}
+.team-logo-wrap .reference-logo{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  position:absolute!important;inset:0!important;
+  width:100%!important;height:100%!important;
+  background:none!important;box-shadow:none!important;
+  border:0!important;border-radius:0!important;
+  color:#98caff!important;font-size:clamp(.65rem,1vw,1rem)!important;
+  font-weight:800!important;letter-spacing:.02em;
+}
+.team-logo-wrap .transparent-nfl-logo,
+.team-logo-wrap img.team-logo.transparent-nfl-logo{
+  display:block!important;width:100%!important;height:100%!important;
+  max-width:100%!important;max-height:100%!important;
+  object-fit:contain!important;
+  background:transparent!important;border:0!important;
+  border-radius:0!important;box-shadow:none!important;
+  filter:none!important;mix-blend-mode:normal!important;
+  opacity:1!important;visibility:visible!important;
+}
+.team-logo-wrap:hover,
+.team-logo-wrap.large:hover,
+.team-logo-wrap.tiny:hover{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+@media(max-width:620px){
+  .team-logo-wrap{width:52px!important;height:52px!important;}
+  .team-logo-wrap.large{width:67px!important;height:67px!important;}
+  .team-logo-wrap.tiny{width:30px!important;height:30px!important;}
+}
