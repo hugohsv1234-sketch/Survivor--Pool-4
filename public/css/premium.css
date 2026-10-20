@@ -710,3 +710,23 @@ button:focus-visible,a:focus-visible{
   max-width:100%;
 }
 .app-shell > .workspace .content{box-sizing:border-box!important;}
+
+
+/* Tablet comfort: four squeezed cards are hard to read beside the fixed nav.
+   Use a balanced 2×2 layout until there is room for four full-width cards. */
+@media (min-width:801px) and (max-width:980px) {
+  .stats-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:10px!important;
+  }
+  .stats-grid .stat-card{
+    min-height:118px;
+    padding:16px!important;
+  }
+  .stats-grid .stat-card>div span{
+    font-size:13px!important;
+  }
+  .stats-grid .stat-card>strong{
+    font-size:2.15rem!important;
+  }
+}
