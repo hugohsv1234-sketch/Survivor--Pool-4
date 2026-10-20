@@ -38,7 +38,10 @@ def create_app(port=8000, host="127.0.0.1"):
                     refresh_espn(app.store, os.environ.get("NFL_SEASON"))
                 # Best-effort public ticket percentages (30-minute throttle).
                 # Never block pool scoring or user picks on third-party data.
-                refresh_ticket_percentages(app.store)
+                try:
+                    refresh_ticket_percentages(app.store)
+                except Exception as exc:
+                    print(f"Öffentliche Wettanteile vorübergehend nicht abrufbar: {exc}", flush=True)
                 threading.Event().wait(120)
         # Load once before serving so a fresh production database has fixtures.
         if os.environ.get("NFL_FEED_URL"):
