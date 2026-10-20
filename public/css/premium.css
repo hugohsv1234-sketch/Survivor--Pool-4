@@ -794,7 +794,7 @@ button:focus-visible,a:focus-visible{
   border:0!important;
   border-radius:0!important;
   box-shadow:none!important;
-  filter:saturate(.86) contrast(1.06) brightness(.88)!important;
+  filter:saturate(.93) contrast(1.05) brightness(.98)!important;
   /* Existing premium controller controls these variables without new JS. */
   transform:translate3d(
     var(--hero-drift-x,0px),
@@ -820,8 +820,8 @@ button:focus-visible,a:focus-visible{
     linear-gradient(90deg,
       rgba(4,15,29,.07) 0%,
       rgba(6,19,35,.22) 24%,
-      rgba(6,20,38,.66) 50%,
-      rgba(6,17,34,.86) 100%),
+      rgba(6,20,38,.54) 50%,
+      rgba(6,17,34,.78) 100%),
     linear-gradient(0deg,rgba(5,15,29,.33),transparent 55%)!important;
   opacity:1!important;
   -webkit-backdrop-filter:none!important;
@@ -863,7 +863,7 @@ button:focus-visible,a:focus-visible{
   box-shadow:0 24px 60px rgba(0,8,21,.43),inset 0 1px rgba(222,237,255,.09)!important;
 }
 .cinematic-dashboard .paetzold-stadium-hero:hover .paetzold-player{
-  filter:saturate(.86) contrast(1.06) brightness(.88)!important;
+  filter:saturate(.93) contrast(1.05) brightness(.98)!important;
   scale:1!important;
 }
 @media(max-width:760px){
@@ -879,15 +879,15 @@ button:focus-visible,a:focus-visible{
   }
   .cinematic-dashboard .paetzold-stadium-hero .paetzold-player{
     background-position:52% top!important;
-    filter:saturate(.85) contrast(1.04) brightness(.86)!important;
+    filter:saturate(.92) contrast(1.04) brightness(1.02)!important;
   }
   .cinematic-dashboard .paetzold-stadium-hero .hero-player-area::after{
     background:
       linear-gradient(90deg,
         rgba(5,15,29,.10),
-        rgba(6,20,37,.48) 29%,
-        rgba(6,18,34,.77) 56%,
-        rgba(6,17,33,.89) 100%)!important;
+        rgba(6,20,37,.33) 29%,
+        rgba(6,18,34,.55) 56%,
+        rgba(6,17,33,.78) 100%)!important;
   }
 }
 @media(prefers-reduced-motion:reduce){
