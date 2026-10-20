@@ -233,10 +233,8 @@ class App:
                 if gid not in games:
                     raise RuleError("Spiel nicht gefunden.", 404)
                 picks = [dict(p) for p in db.execute("SELECT * FROM picks WHERE user_id=? AND season=?", (user["id"], settings["season"]))]
-                if not settings["allow_after_elimination"] and self.player_stats(user, picks, games, settings, now)["survivor"] is False:
-                    raise RuleError("Du bist ausgeschieden. Weitere Tipps sind deaktiviert.", 409)
                 validate_pick(game=games[gid], team=team, current_week=settings["current_week"], season=settings["season"],
-                              picks=picks, games=games, now=now, allow_after_elimination=settings["allow_after_elimination"], tie_is_loss=settings["tie_is_loss"])
+                              picks=picks, games=games, now=now, allow_after_elimination=True, tie_is_loss=settings["tie_is_loss"])
                 db.execute("""INSERT INTO picks(user_id,season,week,game_id,team,created_at,updated_at) VALUES(?,?,?,?,?,?,?)
                               ON CONFLICT(user_id,season,week) DO UPDATE SET game_id=excluded.game_id,team=excluded.team,updated_at=excluded.updated_at""",
                            (user["id"], settings["season"], settings["current_week"], gid, team, now, now))
@@ -247,6 +245,9 @@ class App:
                 self.fields(data, ("tie_is_loss", "allow_after_elimination", "missing_pick_eliminates"))
                 if any(type(v) is not bool for v in data.values()):
                     raise RuleError("Regeln müssen Wahrheitswerte sein.")
+                # Survivor status may change, but leaderboard and weekly picks
+                # always continue through the complete season for everyone.
+                data["allow_after_elimination"] = True
                 for key, value in data.items():
                     self.store.set(db, key, value)
                 settings.update(data)
@@ -417,5 +418,6 @@ class App:
                 "teams": [dict(t) for t in db.execute("SELECT * FROM teams ORDER BY city,name")],
                 "weeks": [{"number": n, "name": week_name(n)} for n in range(1, 23)],
                 "season": settings["season"], "current_week": settings["current_week"], "now": now,
-                "rules": {k: settings[k] for k in ("tie_is_loss", "allow_after_elimination", "missing_pick_eliminates")},
+                "rules": {"tie_is_loss": settings["tie_is_loss"], "allow_after_elimination": True,
+                          "missing_pick_eliminates": settings["missing_pick_eliminates"]},
                 "demo": self.demo_mode, "source_error": settings.get("provider_error"), "last_sync": settings.get("last_sync")}

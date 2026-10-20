@@ -47,7 +47,8 @@ class Client:
         return meta["status"], result, meta["headers"]
 
     def gate(self):
-        return self.call("/api/gate", {"password": "NURDERHSV"})
+        # Legacy helper name in tests; app no longer requires a pool password.
+        return self.call("/api/session")
 
     def login(self, name="max"):
         self.gate()
@@ -134,11 +135,11 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(result["me"]["stats"]["losses"], 0)
         self.assertTrue(any(p["week"] == 6 and p["user_id"] == 1 for p in result["picks"]))
 
-    def test_gate_authentication_and_logout_boundary(self):
+    def test_session_authentication_and_logout_boundary(self):
         self.assertEqual(self.client.call("/api/state")[0], 401)
         self.assertEqual(self.client.call("/api/login", {"username":"max","password":"Survivor2026!"})[0], 401)
-        self.assertEqual(self.client.call("/api/gate", {"password":"wrong"})[0], 401)
         self.assertEqual(self.client.gate()[0], 200)
+        self.assertEqual(self.client.call("/api/login", {"username":"max","password":"wrong"})[0], 401)
         self.assertEqual(self.client.call("/api/state")[0], 401)
         old = self.client.cookie
         self.assertEqual(self.client.call("/api/login", {"username":"MAX","password":"Survivor2026!"})[0], 200)
@@ -158,7 +159,7 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(self.client.call("/api/register", {**fields,"confirmation":"different"})[0], 400)
         self.assertEqual(self.client.call("/api/register", {**fields,"username":"MaX"})[0], 409)
         self.assertEqual(self.client.call("/api/register", {**fields,"username":"<script>"})[0], 400)
-        self.assertEqual(self.client.call("/api/register", {**fields,"password":"short","confirmation":"short"})[0], 400)
+        self.assertEqual(self.client.call("/api/register", {**fields,"password":"four","confirmation":"four"})[0], 400)
         self.assertEqual(self.client.call("/api/register", fields)[0], 200)
         state = self.client.state()
         self.assertEqual(state["me"]["username"], "new_player")
@@ -248,6 +249,45 @@ class ApiTests(unittest.TestCase):
         self.assertIn(5,d["me"]["stats"]["missed"])
         self.assertFalse(d["me"]["stats"]["survivor"])
 
+    def test_season_and_rankings_continue_even_after_everyone_eliminated(self):
+        self.login()
+        # All demo users missed week 5 and are eliminated when week 6 begins.
+        self.assertEqual(self.client.call("/api/demo", {"action":"next_week"})[0], 200)
+        data = self.client.state()
+        self.assertEqual(data["current_week"], 6)
+        self.assertEqual(len(data["players"]), 6)
+        self.assertTrue(all(not p["stats"]["survivor"] for p in data["players"]))
+        self.assertTrue(data["rules"]["allow_after_elimination"])
+        # Even an old/admin request to disable post-elimination picking cannot
+        # silently stop the public pool from continuing through the season.
+        settings={"tie_is_loss":True,"allow_after_elimination":False,"missing_pick_eliminates":True}
+        self.assertEqual(self.client.call("/api/settings", settings)[0], 200)
+        self.assertTrue(self.client.state()["rules"]["allow_after_elimination"])
+        before=self.client.state()["me"]["stats"]
+        selected = None
+        for game in self.client.state()["games"]:
+            if game["week"] != 6 or game["status"] != "scheduled":
+                continue
+            response = self.client.call("/api/pick", {"game_id": game["id"], "team": game["away"]})
+            if response[0] == 200:
+                selected = game
+                break
+        self.assertIsNotNone(selected, "A non-used valid team must remain pickable")
+        current=self.client.state()["me"]["stats"]
+        # An imported historical Week 6 pick is replaced by the real Week 6
+        # pick; this must count as ONE pick, never double-count either one.
+        self.assertEqual(current["total"], before["total"])
+        self.assertEqual(current["losses"], before["losses"]-1)
+        self.assertFalse(current["survivor"])
+        self.assertEqual(self.client.call("/api/demo", {
+            "action": "finish", "game_id": selected["id"], "winner": "away"
+        })[0], 200)
+        updated=self.client.state()
+        self.assertEqual(updated["me"]["stats"]["wins"],before["wins"]+1)
+        self.assertFalse(updated["me"]["stats"]["survivor"])
+        self.assertEqual(self.client.call("/api/demo", {"action":"next_week"})[0], 200)
+        self.assertEqual(self.client.state()["current_week"],7)
+
     def test_concurrent_requests_leave_exactly_one_pick(self):
         self.login()
         cookie,csrf = self.client.cookie,self.client.csrf
@@ -272,17 +312,18 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(self.client.call("/api/state")[2]["Cache-Control"],"no-store")
 
     def test_malformed_requests_and_oversize(self):
-        self.assertEqual(self.client.call("/api/gate",raw=b'{broken')[0],400)
-        self.assertEqual(self.client.call("/api/gate",raw=b'[]')[0],400)
-        self.assertEqual(self.client.call("/api/gate",raw=b'x'*16385)[0],413)
+        self.assertEqual(self.client.call("/api/login",raw=b'{broken')[0],400)
+        self.assertEqual(self.client.call("/api/login",raw=b'[]')[0],400)
+        self.assertEqual(self.client.call("/api/login",raw=b'x'*16385)[0],413)
         self.assertEqual(self.client.call("/api/state",method="PUT")[0],405)
 
     def test_rate_limiter_persists_failed_attempts(self):
         # Seed 29 attempts instead of spending several seconds hashing failures.
+        self.client.gate()
         with self.app.store.transaction() as db:
-            db.execute("INSERT INTO rate_limits VALUES(?,29,?)",("/api/gate:127.0.0.1",time.time()+900))
-        self.assertEqual(self.client.call("/api/gate",{"password":"wrong"})[0],401)
-        self.assertEqual(self.client.gate()[0],429)
+            db.execute("INSERT INTO rate_limits VALUES(?,29,?)",("/api/login:127.0.0.1",time.time()+900))
+        self.assertEqual(self.client.call("/api/login",{"username":"max","password":"wrong"})[0],401)
+        self.assertEqual(self.client.call("/api/login",{"username":"max","password":"Survivor2026!"})[0],429)
 
     def test_true_ticket_percentages_are_not_bookmaker_prices(self):
         html = """
@@ -344,7 +385,7 @@ class ApiTests(unittest.TestCase):
         production=App(Path(self.temp.name)/"prod.sqlite3",ROOT/"public",demo_mode=False,
                        pool_password_hash=self.pool_hash,origins=("https://localhost:8000",),secure=True)
         client=Client(production)
-        response=client.call("/api/gate",{"password":"NURDERHSV"},origin="https://localhost:8000")
+        response=client.call("/api/session",origin="https://localhost:8000")
         self.assertIn("; Secure",response[2]["Set-Cookie"])
         with production.store.connect() as db:
             self.assertEqual(db.execute("SELECT COUNT(*) FROM users").fetchone()[0],0)

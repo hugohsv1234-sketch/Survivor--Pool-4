@@ -1,0 +1,32 @@
+name: Survivor Pool Checks
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Repository laden
+        uses: actions/checkout@v4
+
+      - name: Python bereitstellen
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Backend- und API-Tests ausführen
+        run: python3 -m unittest discover -s tests -p 'test_*.py' -v
+
+      - name: Node bereitstellen
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Isolierte Testdaten erzeugen
+        run: python3 tests/export_snapshot.py
+
+      - name: Frontend-Tests ausführen
+        run: node tests/test_frontend.cjs
