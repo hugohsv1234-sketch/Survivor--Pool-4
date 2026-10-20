@@ -4895,3 +4895,182 @@ h1,h2,h3,h4,.page-heading h1,.section-heading h2,
 @media(prefers-reduced-motion:reduce){
  .public-bets-matchup .public-bets-bar *{transition:none!important;}
 }
+
+
+/* Immersive motion pass: player/typography stage depth + calm clean background.
+   Only decorative motion; interactive controls remain untouched. */
+.cinematic-dashboard .paetzold-stadium-hero{
+ --hero-drift-x:0px;--hero-drift-y:0px;--hero-scroll-y:0px;
+ --hero-heading-x:0px;
+ position:relative!important;
+ isolation:isolate!important;
+ overflow:hidden!important;
+ border:1px solid #3c759f!important;
+ border-bottom-color:#3c759f!important;
+ background:
+   radial-gradient(ellipse 70% 115% at 16% 82%,#153b60 0%,transparent 75%),
+   radial-gradient(ellipse 56% 75% at 89% 19%,#142f52 0%,transparent 85%),
+   linear-gradient(110deg,#060f1d 0%,#0c223c 45%,#071728 100%)!important;
+ box-shadow:0 22px 58px #0108149c,inset 0 1px 0 #b6dfff19!important;
+ transition:border-color .35s ease,box-shadow .5s ease!important;
+ contain:layout style;
+}
+.cinematic-dashboard .paetzold-stadium-hero:hover{
+ border-color:#5b8eb6!important;
+ border-bottom-color:#5b8eb6!important;
+ box-shadow:0 22px 58px #0108149c,inset 0 1px 0 #b6dfff19!important;
+}
+.cinematic-dashboard .paetzold-stadium-hero::before,
+.cinematic-dashboard .paetzold-stadium-hero::after,
+.cinematic-dashboard .paetzold-stadium-hero .stadium-stands,
+.cinematic-dashboard .paetzold-stadium-hero .stadium-hero-glow{
+ display:none!important;
+ background:none!important;
+ animation:none!important;
+ opacity:0!important;
+ box-shadow:none!important;
+ border:0!important;
+}
+/* Head/shoulder in front of the first letter; rest stays behind typography.
+   Both are drawn from the same user-uploaded Paetzold player asset. */
+.cinematic-dashboard .paetzold-stadium-hero .hero-player-area{
+ position:relative!important;
+ isolation:visible!important;
+ z-index:auto!important;
+ overflow:visible!important;
+ align-self:stretch!important;
+ padding:0!important;
+ pointer-events:none!important;
+ filter:none!important;
+ transform:none!important;
+ -webkit-mask-image:none!important;mask-image:none!important;
+}
+.cinematic-dashboard .paetzold-stadium-hero .paetzold-player,
+.cinematic-dashboard .paetzold-stadium-hero .paetzold-player-front{
+ position:absolute!important;
+ display:block!important;
+ top:-7%!important;right:-16%!important;
+ bottom:auto!important;left:auto!important;
+ width:118%!important;height:123%!important;
+ background:transparent url('/icons/paetzold-player.png') 50% 25% / contain no-repeat!important;
+ border:0!important;outline:0!important;box-shadow:none!important;
+ pointer-events:none!important;
+ -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 6%,#000 77%,transparent 100%)!important;
+ mask-image:linear-gradient(90deg,transparent 0%,#000 6%,#000 77%,transparent 100%)!important;
+ mix-blend-mode:screen!important;
+ opacity:1!important;
+ scale:1!important;
+ rotate:0deg!important;
+ animation:none!important;
+ filter:contrast(1.10) brightness(.93)!important;
+ transform:translate3d(var(--hero-drift-x),calc(var(--hero-drift-y) + var(--hero-scroll-y)),0)!important;
+ transition:transform .8s cubic-bezier(.18,.8,.26,1),filter .3s ease!important;
+ will-change:transform;
+}
+.cinematic-dashboard .paetzold-stadium-hero .paetzold-player{z-index:1!important;}
+.cinematic-dashboard .paetzold-stadium-hero .paetzold-player-front{
+ z-index:5!important;
+ /* Reveal just head and top shoulders, over the opening Survivor letter. */
+ clip-path:polygon(0% 0%,100% 0%,100% 45%,0% 45%)!important;
+}
+.cinematic-dashboard .paetzold-stadium-hero .stadium-banner-copy{
+ z-index:2!important;
+ position:relative!important;
+ overflow:visible!important;
+ transform:translate3d(var(--hero-heading-x),0,0)!important;
+ transition:transform .85s cubic-bezier(.18,.8,.26,1)!important;
+}
+.cinematic-dashboard .paetzold-stadium-hero .stadium-banner-copy h1{
+ z-index:2!important;position:relative!important;
+ text-shadow:0 5px 18px #0008!important;
+}
+.cinematic-dashboard .paetzold-stadium-hero .stadium-banner-copy h1 span,
+.cinematic-dashboard .paetzold-stadium-hero .stadium-banner-copy h1 em{
+ position:relative;
+}
+.cinematic-dashboard .paetzold-stadium-hero .stadium-banner-copy p,
+.cinematic-dashboard .paetzold-stadium-hero .stadium-kicker{
+ position:relative;z-index:2!important;
+}
+/* No crimson outline, bloom or pseudo-overlay appears on player hover. */
+.cinematic-dashboard .paetzold-stadium-hero:hover .paetzold-player,
+.cinematic-dashboard .paetzold-stadium-hero:hover .paetzold-player-front{
+ scale:1!important;box-shadow:none!important;
+ filter:contrast(1.1) brightness(.93)!important;
+}
+@keyframes paetzoldFloat{
+ 0%,100%{translate:0 0}
+ 50%{translate:0 -7px}
+}
+@media(prefers-reduced-motion:no-preference){
+ .cinematic-dashboard .paetzold-stadium-hero .paetzold-player,
+ .cinematic-dashboard .paetzold-stadium-hero .paetzold-player-front{
+  animation:paetzoldFloat 7s ease-in-out infinite!important;
+ }
+}
+/* Softly staged scroll reveals: classes are set only if JS observer exists. */
+@keyframes poolRiseIn{
+ from{opacity:0;transform:translate3d(0,22px,0) scale(.975)}
+ to{opacity:1;transform:translate3d(0,0,0) scale(1)}
+}
+@keyframes poolSwipeIn{
+ from{opacity:0;translate:-14px 10px}
+ to{opacity:1;translate:0 0}
+}
+@media(prefers-reduced-motion:no-preference){
+ .motion-reveal-item.motion-pending{
+  opacity:0;
+ }
+ .motion-reveal-item.motion-visible{
+  opacity:1;
+  animation:poolRiseIn .68s cubic-bezier(.2,.78,.22,1) both;
+  animation-delay:var(--motion-stagger,0ms);
+ }
+ .cinematic-dashboard .motion-reveal-item.motion-visible:is(.game-card,.recent-pick,.mini-player){
+  animation-name:poolSwipeIn;
+  animation-duration:.54s;
+ }
+ .motion-hero-enter{
+  animation:poolRiseIn .9s cubic-bezier(.2,.78,.22,1) both;
+ }
+ .cinematic-dashboard .team-choice .team-logo-wrap,
+ .cinematic-dashboard .recent-pick .team-logo-wrap{
+  transition:translate .35s cubic-bezier(.2,.8,.2,1),scale .35s ease!important;
+ }
+ .cinematic-dashboard .team-choice:hover .team-logo-wrap{
+  translate:0 -3px;
+ }
+ .cinematic-dashboard .recent-pick:hover .team-logo-wrap{
+  translate:0 -2px;
+ }
+ .cinematic-dashboard .mini-player,
+ .cinematic-dashboard .recent-pick,
+ .cinematic-dashboard .dashboard-aside .panel-link{
+  transition:translate .3s cubic-bezier(.2,.8,.2,1),background .3s ease,border-color .3s ease!important;
+ }
+ .cinematic-dashboard .recent-pick:hover{translate:3px 0;}
+}
+@media(max-width:760px){
+ .cinematic-dashboard .paetzold-stadium-hero .paetzold-player,
+ .cinematic-dashboard .paetzold-stadium-hero .paetzold-player-front{
+  right:-13%!important;width:128%!important;
+ }
+ .cinematic-dashboard .paetzold-stadium-hero .stadium-banner-copy{
+  transform:none!important;
+ }
+ .cinematic-dashboard .paetzold-stadium-hero .paetzold-player-front{
+  clip-path:polygon(0 0,100% 0,100% 40%,0 40%)!important;
+ }
+}
+/* Motion remains accessible: nonessential movement is fully disabled. */
+@media(prefers-reduced-motion:reduce){
+ .cinematic-dashboard .paetzold-stadium-hero .paetzold-player,
+ .cinematic-dashboard .paetzold-stadium-hero .paetzold-player-front,
+ .cinematic-dashboard .paetzold-stadium-hero .stadium-banner-copy{
+  animation:none!important;transition:none!important;transform:none!important;
+  translate:0!important;
+ }
+ .motion-reveal-item.motion-pending,.motion-reveal-item.motion-visible{
+  animation:none!important;opacity:1!important;transform:none!important;
+ }
+}
