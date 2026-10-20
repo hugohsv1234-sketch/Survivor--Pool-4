@@ -4445,3 +4445,56 @@ dialog::backdrop{background:#020713c8;backdrop-filter:blur(7px)}
   .team-logo-wrap.large{width:67px!important;height:67px!important;}
   .team-logo-wrap.tiny{width:30px!important;height:30px!important;}
 }
+
+
+/* Free pool pick percentages, calculated only from submitted historical and
+   actual picks after kickoff (never reveal a still-private choice). */
+.pool-pick-rate{
+  padding:10px 12px 11px;
+  border-top:1px solid #326084;
+  background:linear-gradient(135deg,#071b31,#0c2945);
+  display:flex;flex-direction:column;gap:6px;
+  min-width:0;overflow:hidden;
+}
+.pool-pick-rate-heading{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:7px;min-width:0;
+}
+.pool-pick-rate-heading>span,.pool-pick-rate.empty>span{
+  font-size:clamp(.57rem,.78vw,.72rem);
+  letter-spacing:.12em;font-weight:850;
+  color:#b6d9f7!important;
+}
+.pool-pick-rate-heading>small,.pool-pick-rate.empty>small{
+  font-size:clamp(.55rem,.7vw,.68rem);
+  color:#e9b9cb!important;text-align:right;
+}
+.pool-pick-rate.empty{min-height:32px;flex-direction:row;align-items:center;justify-content:space-between;gap:8px;}
+.pool-pick-rate-values{display:flex;align-items:center;justify-content:space-between;gap:6px;}
+.pool-pick-rate-values>span{font-size:.76rem;color:#d8b8c8!important;font-variant-numeric:tabular-nums;}
+.pool-pick-rate-values strong{font-size:.93rem;color:#f3c2d2!important;font-weight:850;}
+.pool-pick-rate-track{
+  display:flex;height:7px;overflow:hidden;
+  background:#173d62;border-radius:999px;
+  box-shadow:inset 0 1px 3px #0009;
+}
+.pool-pick-rate-track i,.pool-pick-rate-track b{
+  display:block;flex-shrink:0;height:100%;
+  transition:width .4s cubic-bezier(.2,.8,.2,1);
+}
+.pool-pick-rate-track i{
+  background:linear-gradient(90deg,#338bd3,#83c7ff);
+  border-radius:999px 0 0 999px;
+}
+.pool-pick-rate-track b{
+  background:linear-gradient(90deg,#f75a78,#c82c57);
+  border-radius:0 999px 999px 0;
+}
+@media(max-width:620px){
+ .pool-pick-rate{padding:10px;}
+ .pool-pick-rate-heading>span,.pool-pick-rate.empty>span{font-size:.65rem;}
+ .pool-pick-rate-values>span{font-size:.78rem;}
+}
+@media(prefers-reduced-motion:reduce){
+ .pool-pick-rate-track i,.pool-pick-rate-track b{transition:none!important;}
+}

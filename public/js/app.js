@@ -137,9 +137,22 @@
     if(e.selected&&pick?.result!=='pending')status=resultText(pick.result);
     return `<button class="team-choice ${tone} ${e.againstMax?'against-cap':''} ${e.reasons.length?'unavailable':''}" data-action="pick" data-game="${esc(game.id)}" data-team="${esc(id)}" aria-label="${esc(t.full_name)} wählen. ${esc(e.reasons.join(' ')||status)}" aria-pressed="${e.selected}" ${e.reasons.length?'aria-disabled="true"':''}><span class="team-side">${home?'HEIM':'AUSWÄRTS'}${e.selected?icon('check'):''}</span>${teamBadge(id)}<span class="team-city">${esc(t.city)}</span><strong>${esc(t.name)}</strong><span class="team-availability ${e.used?'bad':e.selected?'lime':e.blockedOpponent?'orange':e.reasons.length?'':'good'}">${e.selected?icon(locked(pick)?'lock':'check'):e.used?icon('close'):e.blockedOpponent?icon('info'):e.reasons.length?icon('lock'):'<i></i>'}${esc(status)}</span>${e.againstMax?'<span class="against-label">3× dagegen · Gegner gesperrt</span>':''}</button>`;
   }
+  function poolPickRate(game) {
+    const data = state.data.pick_rates?.[game.id];
+    if (!data?.total) {
+      return '<div class="pool-pick-rate empty" title="Tippauswahl bleibt bis zum Kickoff privat"><span>POOL-TIPPQUOTEN</span><small>Nach Spielbeginn sichtbar</small></div>';
+    }
+    const away = Math.max(0,Math.min(100,Number(data.percent?.[game.away] ?? 0)));
+    const home = Math.max(0,Math.min(100,Number(data.percent?.[game.home] ?? 0)));
+    return `<div class="pool-pick-rate" aria-label="Tippverteilung im Pool: ${esc(game.away)} ${away} Prozent, ${esc(game.home)} ${home} Prozent, ${data.total} Tipps">
+      <div class="pool-pick-rate-heading"><span>POOL-TIPPQUOTEN</span><small>${data.total} ${data.total===1?'Tipp':'Tipps'} · seit Kickoff</small></div>
+      <div class="pool-pick-rate-values"><span>${esc(game.away)} <strong>${away}%</strong></span><span><strong>${home}%</strong> ${esc(game.home)}</span></div>
+      <div class="pool-pick-rate-track" role="img" aria-label="${away} Prozent ${esc(game.away)}, ${home} Prozent ${esc(game.home)}"><i style="width:${away}%"></i><b style="width:${home}%"></b></div>
+    </div>`;
+  }
   function gameCard(game) {
     const status={scheduled:isStarted(game)?'Gestartet':'Anstehend',live:'Live',final:'Beendet',postponed:'Verschoben',cancelled:'Abgesagt'}[game.status];
-    return `<article class="game-card"><div class="game-card-head"><span>${icon('clock')} ${date(game.kickoff)}</span><span class="match-status ${game.status==='live'?'live':''}">${status}</span></div><div class="matchup">${teamCard(game,game.away,false)}<span class="versus">${game.away_score!==null&&game.home_score!==null?`<b>${game.away_score}</b><small>:</small><b>${game.home_score}</b>`:'VS'}</span>${teamCard(game,game.home,true)}</div>${game.status==='final'?`<div class="game-final">Endstand · ${game.away_score} : ${game.home_score}</div>`:''}</article>`;
+    return `<article class="game-card"><div class="game-card-head"><span>${icon('clock')} ${date(game.kickoff)}</span><span class="match-status ${game.status==='live'?'live':''}">${status}</span></div><div class="matchup">${teamCard(game,game.away,false)}<span class="versus">${game.away_score!==null&&game.home_score!==null?`<b>${game.away_score}</b><small>:</small><b>${game.home_score}</b>`:'VS'}</span>${teamCard(game,game.home,true)}</div>${poolPickRate(game)}${game.status==='final'?`<div class="game-final">Endstand · ${game.away_score} : ${game.home_score}</div>`:''}</article>`;
   }
   function legend() {return '<div class="legend"><span><i class="dot green"></i>Verfügbar</span><span><i class="dot red"></i>Schon verwendet</span><span><i class="dot orange"></i>3× dagegen</span><button data-action="rules" aria-label="Farben und Regeln erklären">'+icon('info')+'</button></div>';}
   function weekControl() {return `<div class="week-control"><button class="icon-button" data-action="prev-week" aria-label="Vorheriger Spieltag" ${state.week===1?'disabled':''}>${icon('chevron','rotate')}</button><select id="week-select" aria-label="Spieltag auswählen">${state.data.weeks.map(w=>`<option value="${w.number}" ${state.week===w.number?'selected':''}>${esc(w.name)}${w.number===state.data.current_week?' · Aktuell':''}</option>`).join('')}</select><button class="icon-button" data-action="next-week-view" aria-label="Nächster Spieltag" ${state.week===22?'disabled':''}>${icon('chevron')}</button></div>`;}
