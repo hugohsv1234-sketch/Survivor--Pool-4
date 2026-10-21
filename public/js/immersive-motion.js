@@ -319,7 +319,14 @@
 
   document.addEventListener('pointermove',event => {
     if (!enabled() || !fine?.matches || event.pointerType === 'touch') return;
-    const target = event.target?.closest?.('.pm-widget');
+    let target = event.target?.closest?.('.pm-widget');
+    // Native dialogs retarget backdrop pointer events to the dialog itself.
+    // Treat that area as outside the widget, so it settles on backdrop hover.
+    if (target?.matches('dialog')) {
+      const r = target === hover && hoverBounds ? hoverBounds : target.getBoundingClientRect();
+      if (event.clientX<r.left || event.clientX>r.left+r.width ||
+          event.clientY<r.top || event.clientY>r.top+r.height) target = null;
+    }
     if (target !== hover) {
       resetHover();hover = target;
       if (target) {
