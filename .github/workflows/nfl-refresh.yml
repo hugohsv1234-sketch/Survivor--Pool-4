@@ -1,0 +1,52 @@
+# Keeps Neon NFL scores up-to-date while the frontend/API run on Vercel.
+# This workflow is INACTIVE until the owner explicitly sets the repository
+# variable NFL_REFRESH_ENABLED=true. Only scheduled and manual triggers exist:
+# no untrusted pull request can access database credentials.
+name: NFL Ergebnisse aktualisieren
+
+on:
+  schedule:
+    # Every ten minutes, off the top-of-hour to reduce GitHub scheduling delay.
+    # Schedules are best-effort and may occasionally start late.
+    - cron: '7,17,27,37,47,57 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: survivor-nfl-refresh
+  cancel-in-progress: false
+
+jobs:
+  update:
+    if: ${{ github.event_name == 'workflow_dispatch' || vars.NFL_REFRESH_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      DATABASE_URL: ${{ secrets.NFL_REFRESH_DATABASE_URL }}
+      NFL_FEED_URL: ${{ vars.NFL_FEED_URL }}
+      NFL_FEED_TOKEN: ${{ secrets.NFL_FEED_TOKEN }}
+    steps:
+      - name: Projektcode laden
+        uses: actions/checkout@v4
+
+      - name: Python bereitstellen
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Neon-Geheimnis sicher pruefen
+        shell: bash
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::Repository Secret NFL_REFRESH_DATABASE_URL fehlt."
+            exit 1
+          fi
+          echo "Neon-Verbindung konfiguriert (Inhalt wird nicht ausgegeben)."
+
+      - name: PostgreSQL-Treiber installieren
+        run: python -m pip install "psycopg[binary]>=3.2,<4"
+
+      - name: NFL-Ergebnisse und optionale Wettanteile synchronisieren
+        run: python -m scripts.refresh_nfl
