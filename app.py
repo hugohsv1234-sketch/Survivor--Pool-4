@@ -36,7 +36,7 @@ def _production_origins():
         candidate = candidate.rstrip("/")
         parsed = urlsplit(candidate)
         if (
-            parsed.scheme != "https:"
+            parsed.scheme != "https"
             or not parsed.netloc
             or parsed.path
             or parsed.query
