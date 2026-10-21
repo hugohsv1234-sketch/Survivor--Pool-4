@@ -18,6 +18,11 @@ async function visible(page, selector, timeout=12000) {
   return element;
 }
 async function snapshot(page,name) {
+  // Let queued route/observer work start, then capture the final presentation.
+  // Infinite ambient lights do not delay screenshots.
+  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  await page.waitForFunction(()=>document.getAnimations().every(animation=>
+    animation.playState!=='running' || animation.effect?.getComputedTiming().iterations===Infinity),null,{timeout:3000});
   await page.screenshot({path:path.join(save,name+'.png'),animations:'disabled'});
 }
 async function noOverflow(page,name) {
@@ -145,6 +150,10 @@ async function testSize(browser,config) {
     await visible(page,'#account-form');
     await snapshot(page,name+'-login');
     await noOverflow(page,name+' login');
+    if (width<=620) {
+      const size=await page.locator('#username').evaluate(node=>parseFloat(getComputedStyle(node).fontSize));
+      assert.ok(size>=16,'phone forms must retain at least 16px text to avoid iOS focus zoom');
+    }
     await page.locator('[data-action="auth-tab"][data-tab="register"]').click();
     assert.equal(await page.locator('#display_name').count(),1);
     assert.equal(await page.locator('#confirmation').count(),1);
@@ -198,6 +207,11 @@ async function testSize(browser,config) {
     await navigate(page,'leaderboard','.leaderboard-panel');
     assert.ok(await page.locator('.leaderboard-row').count()>0);
     await noOverflow(page,name+' leaderboard');
+    if (width<=620) {
+      const centers=await page.locator('.leaderboard-row').first().evaluate(row=>
+        [...row.children].map(node=>{const r=node.getBoundingClientRect();return r.top+r.height/2;}));
+      assert.ok(Math.max(...centers)-Math.min(...centers)<4,'phone ranking names and values must align in one row');
+    }
     assert.ok(!(await page.locator('.leaderboard-panel').innerText()).includes('Ausgeschieden'));
     await snapshot(page,name+'-leaderboard');
 

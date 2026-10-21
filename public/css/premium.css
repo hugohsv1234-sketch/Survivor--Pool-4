@@ -861,11 +861,11 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,
     padding:18px 12px!important;gap:7px!important;min-height:81px!important;
   }
   .page-content .leaderboard-row>.leader-player>.avatar {width:29px!important;height:29px!important;flex-basis:29px!important;font-size:10px;}
-  .page-content .leaderboard-row>.leader-player {gap:8px!important;}
+  .page-content .leaderboard-row>.leader-player {gap:8px!important;grid-column:auto!important;grid-row:auto!important;}
   .page-content .leaderboard-row .big-rank {min-width:19px!important;font-size:12px!important;}
   .page-content .leader-player b {font-size:12px!important;}
   .page-content .leader-player small {font-size:9px!important;}
-  .page-content .leaderboard-row>strong {font-size:18px!important;}
+  .page-content .leaderboard-row>strong {font-size:18px!important;grid-column:auto!important;grid-row:auto!important;padding:0!important;text-align:center!important;background:transparent!important;border:0!important;border-radius:0!important;}
   .page-content .leaderboard-row>strong small {display:block!important;font-size:8px!important;font-weight:500;letter-spacing:0;color:#90adcd!important;margin-bottom:5px;}
   .page-content .season-milestones {gap:8px;}
   .page-content .season-milestones>div {padding:13px 10px;border-radius:11px!important;}
@@ -876,6 +876,9 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,
   .page-content .history-pick>div {min-width:140px;}
   .account-shell .auth-card {padding:28px 24px!important;border-radius:17px!important;}
   .account-shell .auth-card h1 {font-size:27px!important;}
+  /* Preserve the existing iOS focus behaviour: sub-16px form text zooms. */
+  body .account-shell .auth-card input,body .page-content input:not([type=checkbox]):not([type=file]),
+  body .page-content select,body dialog input:not([type=checkbox]),body dialog select {font-size:16px!important;}
   body dialog {padding:24px 20px!important;border-radius:17px!important;max-width:calc(100vw - 24px);}
   .dialog-head h2 {font-size:23px!important;}
   .dialog-actions {gap:9px;}

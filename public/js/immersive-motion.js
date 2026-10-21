@@ -123,12 +123,12 @@
   function prepareReveals(page, signature) {
     const nodes = Array.from(page.querySelectorAll(revealSelectors)).slice(0,180);
     if ('IntersectionObserver' in window) {
-      revealObserver = new IntersectionObserver(entries => {
+      revealObserver = new IntersectionObserver((entries, observer) => {
         for (const entry of entries) {
-          if (!entry.isIntersecting) continue;
+          if (!entry.isIntersecting || !entry.target.isConnected) continue;
           const index = Number(entry.target.dataset.pmOrder || 0);
           reveal(entry.target,index,signature);
-          revealObserver.unobserve(entry.target);
+          observer.unobserve(entry.target);
         }
       },{rootMargin:'0px 0px 32px 0px',threshold:.025});
       nodes.forEach((node,index) => {
