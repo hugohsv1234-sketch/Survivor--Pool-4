@@ -62,12 +62,24 @@ async function assertWidgetTilt(page,selector,label,attempt=0) {
   const widget=page.locator(selector).first();
   await page.mouse.move(0,0);
   await widget.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(120);
   await page.waitForFunction(()=>document.getAnimations().every(animation=>
     animation.playState!=='running' || animation.effect?.getComputedTiming().iterations===Infinity));
-  const box=await widget.boundingBox();
-  assert.ok(box && box.width>0 && box.height>0,label+' must remain visible');
+  const box=await widget.evaluate(node=>{
+    const r=node.getBoundingClientRect();
+    // Probe a visible band of the widget itself, clear of the sticky header
+    // and any independently moving nested cards (e.g. account settings).
+    const left=r.left+r.width*.18,right=r.left+r.width*.82;
+    const ys=[r.top+22,Math.max(90,r.top+22),r.top+r.height*.5,r.bottom-22];
+    const y=ys.find(y=>y>80 && y<innerHeight-16 &&
+      document.elementFromPoint(left,y)?.closest('.pm-widget')===node &&
+      document.elementFromPoint(right,y)?.closest('.pm-widget')===node);
+    return {x:r.x,y:r.y,width:r.width,height:r.height,left,right,probeY:y,
+      candidates:ys.map(y=>({y,owner:document.elementFromPoint(left,y)?.closest('.pm-widget')?.className}))};
+  });
+  assert.ok(box.width>0 && box.height>0 && box.probeY!==undefined,label+' needs two exposed pointer targets: '+JSON.stringify(box));
   const surface=await widget.elementHandle();
-  const y=Math.max(90,box.y+Math.min(22,box.height*.24));
+  const y=box.probeY;
   const read=()=>widget.evaluate(node=>{
     const matrix=new DOMMatrixReadOnly(getComputedStyle(node).transform);
     const light=node.querySelector(':scope>.pm-widget-light');
@@ -84,7 +96,7 @@ async function assertWidgetTilt(page,selector,label,attempt=0) {
     assert.ok(attempt<2,label+' was repeatedly replaced during the pointer probe');
     return assertWidgetTilt(page,selector,label,attempt+1);
   }
-  assert.ok(left.owns && left.active===1,label+' must own the effect without rotating ancestor panels');
+  assert.ok(left.owns && left.active===1,label+' must own the effect without rotating ancestor panels: '+JSON.stringify({left,box}));
   assert.ok(Math.abs(left.rotation)>.008 && left.lift<-1,label+' must visibly tilt and lift');
   await page.mouse.move(box.x+box.width*.82,y,{steps:4});
   await page.waitForTimeout(240);
@@ -107,6 +119,7 @@ async function assertWidgetTilt(page,selector,label,attempt=0) {
     return Math.abs(matrix.m13)<.0001 && Math.abs(matrix.m23)<.0001 && Math.abs(matrix.m42)<.05;
   },selector);
   assert.equal((await read()).active,0,label+' must settle on pointer exit');
+  console.log('PASS pointer',label);
 }
 async function assertStaticPointer(page,selector,label) {
   await page.locator(selector).first().hover();
