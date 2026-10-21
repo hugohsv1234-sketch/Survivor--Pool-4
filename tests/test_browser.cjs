@@ -45,6 +45,9 @@ async function statsMatch(page) {
 async function navigate(page, route, target) {
   const mobile=await page.locator('.bottom-nav').isVisible();
   await page.locator((mobile?'.bottom-nav a':'.sidebar .nav-link')+'[href="#'+route+'"]').click();
+  // Shared selectors such as .stats-grid also exist on the departing profile.
+  // Wait for the actual route render before interacting with the new widgets.
+  await page.waitForFunction(route=>document.querySelector('.sidebar .nav-link[aria-current="page"]')?.getAttribute('href')==='#'+route,route);
   await visible(page,target);
 }
 async function assertQuietRefresh(page) {
