@@ -104,6 +104,17 @@ async function assertStaticPointer(page,selector,label) {
   assert.ok(result.rotation<.0001,label+' must remain level');
   await page.mouse.move(0,0);
 }
+async function pointAtStatistic(page) {
+  const statistic=page.locator('.stat-card').first();
+  await statistic.scrollIntoViewIfNeeded();
+  // Complete the scroll before moving the mouse: scrolling intentionally resets
+  // tilt, and a test runner's automatic scroll can arrive after locator.hover().
+  await page.waitForTimeout(100);
+  const box=await statistic.boundingBox();
+  await page.mouse.move(0,0);
+  await page.mouse.move(box.x+box.width*.25,box.y+box.height*.5,{steps:3});
+  await page.waitForFunction(()=>!!document.querySelector('.pm-tilting'),null,{timeout:2500});
+}
 async function pickFlow(page,config,writes) {
   await navigate(page,'profile','.profile-account-actions');
   await page.locator('.profile-account-actions [data-action="logout"]').click();
@@ -238,8 +249,7 @@ async function testSize(browser,config) {
         ['.ranking-panel','dashboard leaderboard'],['.recent-panel','recent picks'],
         ['.dashboard-aside>.rule-note','rules widget']
       ]) await assertWidgetTilt(page,selector,label);
-      await page.locator('.stat-card').first().hover();
-      await page.waitForFunction(()=>!!document.querySelector('.pm-tilting'));
+      await pointAtStatistic(page);
       await page.evaluate(()=>window.scrollBy(0,40));
       await page.waitForFunction(()=>!document.querySelector('.pm-tilting'));
       await page.mouse.move(0,0);
@@ -305,8 +315,7 @@ async function testSize(browser,config) {
     if (!noEnhancement && !reduced) {
       await navigate(page,'dashboard','.stats-grid');
       if (checkTilt) {
-        await page.locator('.stat-card').first().hover();
-        await page.waitForFunction(()=>!!document.querySelector('.pm-tilting'));
+        await pointAtStatistic(page);
       }
       await page.emulateMedia({reducedMotion:'reduce'});
       await statsMatch(page);
