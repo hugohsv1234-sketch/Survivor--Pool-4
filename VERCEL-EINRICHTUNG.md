@@ -89,3 +89,66 @@ Render tatsaechlich aktiv ist.
 Auch die Gratis-Tarife von Vercel und Neon haben Nutzungsgrenzen.
 `app.py` aendert keine NFL-Regeln, keine Tabellenstruktur und keine
 bestehenden API-Endpunkte.
+
+
+## 5. Kostenlosen NFL-Ergebnisabgleich mit GitHub Actions aktivieren
+
+Der aktualisierte Code enthaelt `.github/workflows/nfl-refresh.yml` und
+`scripts/refresh_nfl.py`. Der Job nutzt exakt die vorhandene ESPN-
+Synchronisierung und optional die bereits vorhandene DraftKings-
+Wettanteil-Anzeige. Es ist **kein** neuer NFL-Provider eingebaut.
+
+Die GitHub-Action ist aus Sicherheitsgruenden **standardmaessig aus**:
+Weder `push` noch `pull_request` loesen DB-Schreibzugriffe aus. Ohne
+die ausdrueckliche Aktivierungsvariable wird auch der Zeitplan uebersprungen.
+
+### Erst auf einer Test-Datenbank testen
+
+1. Neon > Branches > `vercel-test` > Connect oeffnen und
+   **Connection pooling** eingeschaltet lassen.
+2. Die Postgres-Verbindungsadresse kopieren, aber NIE im GitHub-Code
+   oder Chat veroeffentlichen. Der geheime String gehoert nur in
+   **GitHub > Repository > Settings > Secrets and variables >
+   Actions > Secrets > New repository secret**.
+3. Als Secret-Name genau **`NFL_REFRESH_DATABASE_URL`** verwenden;
+   als Wert die Verbindung zum **Neon-Branch `vercel-test`**.
+   Der Secret-Wert darf nicht `production` sein, solange wir testen.
+4. GitHub > **Actions > NFL Ergebnisse aktualisieren > Run workflow**
+   auf Branch `main`. Den Lauf oeffnen und kontrollieren:
+   gruene Steps, "Bestehender NFL-Pool" und "erfolgreich aktualisiert".
+   Falls der Lauf fehlschlaegt, die Fehlermeldung ohne Secrets zeigen.
+5. Neon-Testbranch und die Vercel-Testwebsite vergleichen, damit
+   das Live-Ergebnis-Update und die bereits vorhandenen Tipps stimmen.
+
+### Danach Zeitplan einschalten (weiterhin Test-Datenbank)
+
+6. GitHub > Repository > **Settings > Secrets and variables >
+   Actions > Variables > New repository variable**.
+7. Name genau **`NFL_REFRESH_ENABLED`**; Wert **`true`**.
+   Damit kann der Job automatisch **etwa alle 10 Minuten** laufen
+   (GitHub-Cron startet gelegentlich verzoegert oder faellt aus).
+8. Pruefen, dass die naechsten automatischen Laeufe gruen bleiben.
+
+### Erst nach Daten-Backup: Produktivwechsel
+
+9. Neon-`production` erst als separaten Branch sichern und zusaetzlich
+   mit `pg_dump` ausserhalb Neons sichern. Render nicht loeschen.
+10. **Zuerst** die GitHub-Variable `NFL_REFRESH_ENABLED` auf `false`
+    setzen und laufende Sync-Jobs auslaufen lassen.
+11. Die Vercel-`DATABASE_URL` von `vercel-test` auf die bestehende
+    Neon-`production`-Adresse umstellen (nur Production-Umgebung).
+    Auf Vercel danach eine neue Production-Deployment-Version starten.
+    Gewachsene Benutzerdaten NICHT neu importieren.
+12. Sobald die Produktionswebsite getestet ist, das GitHub-Secret
+    `NFL_REFRESH_DATABASE_URL` ebenfalls auf die **gleiche**
+    bestehende Neon-`production`-Adresse aendern.
+13. GitHub-Action erst manuell pruefen, danach
+    `NFL_REFRESH_ENABLED=true` setzen und die Zeitlaeufe beobachten.
+
+**Wichtig:** GitHub Actions auf Standard-Ubuntu-Runnern ist fuer dieses
+oeffentliche GitHub-Repo kostenlos. Geplante Jobs sind keine
+Garantie fuer Echtzeit-Live-Ergebnisse; der Zeitplan kann sich verzoegern,
+und GitHub deaktiviert geplante Workflows bei oeffentlichen Repos nach
+60 Tagen ohne Repository-Aktivitaet. Auch Neon bleibt an das eigene
+Free-Tier-Limit gebunden. Der Job speichert keine Anmeldeinformationen
+in Dateien/Artefakten und nutzt den vorhandenen Postgres-Datensatz.
