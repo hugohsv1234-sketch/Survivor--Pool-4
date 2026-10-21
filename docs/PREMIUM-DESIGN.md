@@ -32,6 +32,19 @@ unverändert. Zahlenanimationen lesen ausschließlich die vom Renderer ausgegebe
 Werte und stellen bei Abbruch sofort den bestätigten Endwert her.
 
 Pointer-Effekte laufen nur mit feinem Zeigegerät und höchstens einmal pro Frame.
+Alle vorhandenen Widget-Flächen verwenden dasselbe 3D-Tilt-System: Spiel- und
+Statistikkarten, beide Arten von Prozentanzeigen, Bestenliste, Saisonmatrix,
+Profilbereiche, Teamkacheln, Accountfelder, Hinweise, Login, Dialoge und Fotobanner.
+Jeweils die innerste Fläche unter dem Zeiger dreht sich; übergeordnete Panels
+bleiben dabei gerade. Der Winkel passt sich der Fläche an (höchstens 6 Grad),
+die Mauskoordinaten stammen aus ihrem ruhenden Rechteck. Dadurch gibt es an
+den Rändern keine Rückkopplung durch bereits transformierte Geometrie.
+Eine inerte, für Assistenztechnik ausgeblendete Ebene liefert blau-rote
+Lichtreflexe und eine schmale reflektierende Kontur. Bestehende Pseudoelemente,
+Farben für Spielzustände und alle Klickziele bleiben erhalten. Beim Verlassen,
+Scrollen, Fokusverlust, Ansichtswechsel oder Medienwechsel kehrt die Fläche
+zur Ruheposition zurück. Nur die aktive Fläche erhält `will-change`; es gibt
+weder einen dauernden Pointer-Animationsloop noch eine zusätzliche Bibliothek.
 Mobil gibt es natives Touch-Feedback. `prefers-reduced-motion` wird auch bei
 Änderungen während der Sitzung respektiert. Bei ausgeblendetem Dokument pausieren
 Ambient-Animationen und temporäre Effekte werden beendet. Observer und Frames werden

@@ -10,7 +10,7 @@
   --premium-raised:#101e32;
   --premium-text:#eef4ff;
   --premium-muted:#9baec7;
-  --premium-line:rgba(134,174,224,.16);
+  --premium-line:rgba(134,174,224,.21);
   --premium-line-bright:rgba(134,184,244,.36);
   --premium-ease:cubic-bezier(.22,.8,.24,1);
   --premium-spring:cubic-bezier(.18,.85,.32,1.12);
@@ -18,7 +18,7 @@
   --premium-medium:300ms;
   --premium-slow:540ms;
   --premium-radius:18px;
-  --premium-shadow:0 16px 44px #01061140,inset 0 1px #ffffff04;
+  --premium-shadow:0 18px 46px #01061150,inset 0 1px #c1ddff0a,inset 0 -1px #0003;
   --premium-body:Inter,"Aptos","Segoe UI Variable",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   --text:var(--premium-text);
   --muted:var(--premium-muted);
@@ -65,7 +65,13 @@ body {
   left:12%;bottom:-380px;
   background:radial-gradient(ellipse,#b52c451a,transparent 70%);
 }
-.workspace .content {max-width:1560px;padding:32px 32px 24px!important;}
+.workspace .content {position:relative;isolation:isolate;max-width:1560px;padding:32px 32px 24px!important;}
+.workspace .content::before {
+  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background-image:linear-gradient(#88baff05 1px,transparent 1px),linear-gradient(90deg,#88baff05 1px,transparent 1px);
+  background-size:64px 64px;
+  mask-image:linear-gradient(#0009,transparent 900px);
+}
 .page-content,.page-content>* {max-width:100%;}
 .cinematic-dashboard {gap:0!important;}
 .cinematic-dashboard::before {display:none!important;}
@@ -207,7 +213,7 @@ body {
 .cinematic-dashboard .dashboard-aside>.panel,.profile-grid>.panel,
 .page-content .account-setting,.account-shell .auth-card {
   border:1px solid var(--premium-line)!important;border-radius:var(--premium-radius)!important;
-  background:linear-gradient(145deg,#0f1b2d,#0a1424)!important;
+  background:radial-gradient(ellipse at 0 0,#68b5ff0b,transparent 65%),linear-gradient(135deg,#101e32,#0a1424 65%,#0e1628)!important;
   box-shadow:var(--premium-shadow)!important;
 }
 .cinematic-dashboard .broadcast-layout {grid-template-columns:minmax(0,1fr) 306px!important;gap:22px!important;align-items:start;}
@@ -316,8 +322,8 @@ body {
 .page-content .stats-grid .stat-card,.page-content .cinematic-dashboard .stats-grid .stat-card {
   position:relative;isolation:isolate;min-width:0;min-height:144px;
   padding:20px 22px!important;border:1px solid var(--premium-line)!important;border-top:1px solid var(--premium-line)!important;
-  border-radius:15px!important;background:linear-gradient(145deg,#101e32,#0b1525)!important;
-  box-shadow:0 6px 24px #02081426,inset 0 1px #ffffff04!important;
+  border-radius:15px!important;background:radial-gradient(ellipse at 0 0,#68b5ff16,transparent 75%),linear-gradient(145deg,#101e32,#0b1525)!important;
+  box-shadow:0 8px 28px #0208143b,inset 0 1px #c5e2ff0a!important;
   overflow:hidden;transform:none!important;transform-style:flat!important;
 }
 .page-content .stats-grid .stat-card::after {
@@ -325,6 +331,7 @@ body {
   background:linear-gradient(90deg,transparent,#68b5ff40,transparent);pointer-events:none;
 }
 .page-content .stats-grid .stat-card:nth-child(2)::after {background:linear-gradient(90deg,transparent,#ff456566,transparent);}
+.page-content .stats-grid .stat-card:nth-child(2) {background:radial-gradient(ellipse at 0 0,#ff456510,transparent 75%),linear-gradient(145deg,#171c30,#0d1525)!important;}
 .page-content .stats-grid .stat-card>div span {font-size:12px!important;font-weight:550!important;color:#b9c9df!important;}
 .page-content .stats-grid .stat-card>div>.icon {width:17px;height:17px;color:#7bbcff!important;}
 .page-content .stats-grid .stat-card:nth-child(2)>div>.icon {color:#ff6985!important;}
@@ -375,13 +382,13 @@ body {
 .page-content .games-grid.full {grid-template-columns:repeat(3,minmax(0,1fr))!important;}
 .page-content .game-card {
   position:relative;isolation:isolate;min-width:0;overflow:hidden!important;
-  border:1px solid #6e9bd32b!important;border-radius:14px!important;
-  background:linear-gradient(145deg,#101f34,#0b1729)!important;
-  box-shadow:0 7px 22px #0109162b!important;transform:none!important;transform-style:flat!important;
+  border:1px solid #6e9bd33b!important;border-radius:14px!important;
+  background:radial-gradient(ellipse at 10% 0,#68b5ff0c,transparent 65%),linear-gradient(145deg,#111f35,#0b1729)!important;
+  box-shadow:0 8px 26px #0109163b,inset 0 1px #c5e2ff08!important;transform:none!important;transform-style:flat!important;
 }
 .page-content .game-card .game-card-head {
   padding:12px 14px!important;font-size:10px!important;font-weight:550!important;
-  background:#15263c80!important;border-bottom:1px solid #739ac61a!important;color:#a3bddc!important;
+  background:linear-gradient(110deg,#24426455,#15263c50)!important;border-bottom:1px solid #739ac62b!important;color:#b1c9e6!important;
 }
 .game-card-head .icon {width:13px;height:13px;}
 .page-content .game-card .matchup {background:transparent!important;grid-template-columns:repeat(2,minmax(0,1fr));}
@@ -662,18 +669,35 @@ body .account-shell {
 .boot .brand-symbol {box-shadow:0 0 40px #f6456526;}
 .boot p {font-size:12px;letter-spacing:.2em;color:#adcaed;}
 .loader {border:2px solid #78afff1f!important;border-top-color:var(--premium-blue)!important;border-right-color:var(--premium-red)!important;}
+/* One pointer owner per widget: nearby panels stay level while the card beneath
+   the pointer tilts. The light is an inert child, preserving status decorations. */
+.pm-widget {
+  --pm-light-x:50%;--pm-light-y:50%;--pm-tilt-x:0deg;--pm-tilt-y:0deg;
+  --pm-light-blue:#68b5ff19;--pm-light-red:#ff456510;
+  isolation:isolate;
+}
+.pm-widget:not(dialog) {position:relative;}
+#modal.pm-widget {position:fixed;}
+.pm-widget-light {
+  position:absolute!important;inset:0!important;z-index:3!important;
+  display:block!important;pointer-events:none!important;border-radius:inherit!important;
+  width:auto!important;height:auto!important;margin:0!important;padding:0!important;
+  overflow:hidden;opacity:0;
+  background:radial-gradient(ellipse 360px 280px at var(--pm-light-x) var(--pm-light-y),var(--pm-light-blue),transparent 80%),
+    radial-gradient(ellipse 280px 220px at calc(100% - var(--pm-light-x)) calc(100% - var(--pm-light-y)),var(--pm-light-red),transparent 85%);
+  box-shadow:inset 0 1px #c6e3ff3b,inset 0 -1px #ff45651a;
+  transition:opacity 320ms var(--premium-ease);
+}
+.pm-widget-light::after {
+  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  border:1px solid transparent;
+  background:radial-gradient(ellipse 220px 180px at var(--pm-light-x) var(--pm-light-y),#bce1ff99,#68b5ff26 55%,transparent 85%) border-box;
+  mask:linear-gradient(#fff 0 0) padding-box,linear-gradient(#fff 0 0);
+  mask-composite:exclude;
+}
+.stat-card:nth-child(2).pm-widget {--pm-light-blue:#ff45651c;--pm-light-red:#68b5ff0d;}
 /* A single timing vocabulary. No animation gates click handlers, navigation,
    validation or requests. Opacity never hides waiting scroll-reveal content. */
-.pm-hover {--pm-light-x:0px;--pm-light-y:0px;}
-.page-content .pm-hover::before {
-  content:""!important;position:absolute!important;inset:auto!important;top:0!important;left:0!important;
-  width:300px!important;height:300px!important;z-index:-1!important;pointer-events:none!important;
-  border:0!important;border-radius:50%!important;opacity:0;
-  background:radial-gradient(circle,#70b6ff16,transparent 70%)!important;
-  transform:translate3d(calc(var(--pm-light-x) - 150px),calc(var(--pm-light-y) - 150px),0)!important;
-  transition:opacity 250ms!important;animation:none!important;
-}
-.page-content .stat-card:nth-child(2).pm-hover::before {background:radial-gradient(circle,#ff45651a,transparent 70%)!important;}
 .pm-reveal,.pm-reveal.pm-wait {opacity:1;visibility:visible;}
 .motion-tap-ripple {
   position:absolute;z-index:5;display:block;border-radius:50%;pointer-events:none;
@@ -701,7 +725,6 @@ body .account-shell {
   .workspace::after,.account-shell::after {animation:premiumAmbient 29s ease-in-out -8s infinite alternate-reverse;}
   .match-status.live::before {animation:premiumLive 2.8s ease-in-out infinite!important;}
   .pm-data-updated {animation:premiumStatus 700ms ease-out!important;}
-  .page-content .pm-hover {transition:transform 280ms var(--premium-ease),border-color 220ms,box-shadow 280ms!important;}
   dialog[open]::backdrop {animation:enter 220ms ease-out;}
 }
 @media (hover:hover) and (pointer:fine) {
@@ -718,11 +741,22 @@ body .account-shell {
   .section-heading>a:hover {color:#c6e2ff!important;}
 }
 @media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference) {
-  .page-content .pm-hover:hover::before {opacity:1;}
-  .page-content :is(.game-card,.stat-card,.inventory-team).pm-hover:hover {
-    transform:perspective(1100px) translateY(-3px) rotateX(var(--pm-tilt-x,0deg)) rotateY(var(--pm-tilt-y,0deg))!important;
-    border-color:#7ebaff61!important;box-shadow:0 14px 30px #01051055,inset 0 1px #ffffff09!important;
+  /* The app ID wins over legacy component hover transforms. A stable neutral
+     transform lets every surface settle back with the same controlled curve. */
+  :is(#app .pm-widget,#modal.pm-widget) {
+    transform:perspective(1100px) translate3d(0,0,0) rotateX(0deg) rotateY(0deg)!important;
+    transform-origin:center;backface-visibility:hidden;
+    transition:transform 420ms var(--premium-spring),border-color 260ms,box-shadow 320ms!important;
   }
+  :is(#app .pm-widget,#modal.pm-widget).pm-tilting {
+    transform:perspective(1100px) translate3d(0,-4px,0) rotateX(var(--pm-tilt-x)) rotateY(var(--pm-tilt-y))!important;
+    transition:transform 180ms var(--premium-ease),border-color 220ms,box-shadow 260ms!important;
+    border-color:#82bcff73!important;
+    box-shadow:0 22px 44px #01051070,0 0 24px #68b5ff09,inset 0 1px #d0e7ff16!important;
+    will-change:transform;
+  }
+  :is(#app .pm-widget,#modal.pm-widget).pm-tilting>.pm-widget-light {opacity:1;}
+  #app .stat-card:nth-child(2).pm-tilting {border-color:#ff708a70!important;box-shadow:0 22px 44px #01051070,0 0 24px #ff456509!important;}
   .button:hover:not(:disabled),.panel-link:hover {transform:translateY(-2px)!important;}
   .panel-link:hover .icon {transform:translateX(3px)!important;}
   .nav-link:hover .icon {transform:translateY(-1px)!important;}
@@ -927,8 +961,8 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,
   html body #modal,html body #modal *,html body #modal::backdrop,
   html body #toast,html body #toast * {animation:none!important;transition:none!important;scroll-behavior:auto!important;}
   .pm-reveal,.pm-wait,.pm-visible,.pm-route-enter {opacity:1!important;translate:none!important;filter:none!important;}
-  .motion-tap-ripple,.pm-hover::before {display:none!important;}
-  .page-content .pm-hover,.page-content .pm-hover:hover,.cinematic-dashboard .paetzold-stadium-hero .paetzold-player,
+  .motion-tap-ripple,.pm-widget-light {display:none!important;}
+  #app .pm-widget,#app .pm-widget:hover,#modal.pm-widget,.cinematic-dashboard .paetzold-stadium-hero .paetzold-player,
   .cinematic-dashboard .paetzold-stadium-hero .stadium-banner-copy {transform:none!important;scale:1!important;}
 }
 @media (forced-colors:active) {

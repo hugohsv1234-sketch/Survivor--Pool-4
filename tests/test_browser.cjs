@@ -45,6 +45,9 @@ async function statsMatch(page) {
 async function navigate(page, route, target) {
   const mobile=await page.locator('.bottom-nav').isVisible();
   await page.locator((mobile?'.bottom-nav a':'.sidebar .nav-link')+'[href="#'+route+'"]').click();
+  // Shared selectors such as .stats-grid also exist on the departing profile.
+  // Wait for the actual route render before interacting with the new widgets.
+  await page.waitForFunction(route=>document.querySelector('.sidebar .nav-link[aria-current="page"]')?.getAttribute('href')==='#'+route,route);
   await visible(page,target);
 }
 async function assertQuietRefresh(page) {
@@ -57,6 +60,91 @@ async function assertQuietRefresh(page) {
   assert.equal(await page.locator('.pm-route-enter').count(),0,'quiet refresh must not replay the page intro');
   await statsMatch(page);
   await previous.dispose();
+}
+async function assertWidgetTilt(page,selector,label,attempt=0) {
+  const widget=page.locator(selector).first();
+  await page.mouse.move(0,0);
+  await widget.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(120);
+  await page.waitForFunction(()=>document.getAnimations().every(animation=>
+    animation.playState!=='running' || animation.effect?.getComputedTiming().iterations===Infinity));
+  const box=await widget.evaluate(node=>{
+    const r=node.getBoundingClientRect();
+    // Probe a visible band of the widget itself, clear of the sticky header
+    // and any independently moving nested cards (e.g. account settings).
+    const left=r.left+r.width*.18,right=r.left+r.width*.82;
+    const ys=[r.top+22,Math.max(90,r.top+22),r.top+r.height*.5,r.bottom-22];
+    const y=ys.find(y=>y>80 && y<innerHeight-16 &&
+      document.elementFromPoint(left,y)?.closest('.pm-widget')===node &&
+      document.elementFromPoint(right,y)?.closest('.pm-widget')===node);
+    return {x:r.x,y:r.y,width:r.width,height:r.height,left,right,probeY:y,
+      candidates:ys.map(y=>({y,owner:document.elementFromPoint(left,y)?.closest('.pm-widget')?.className}))};
+  });
+  assert.ok(box.width>0 && box.height>0 && box.probeY!==undefined,label+' needs two exposed pointer targets: '+JSON.stringify(box));
+  const surface=await widget.elementHandle();
+  const y=box.probeY;
+  const read=()=>widget.evaluate(node=>{
+    const matrix=new DOMMatrixReadOnly(getComputedStyle(node).transform);
+    const light=node.querySelector(':scope>.pm-widget-light');
+    return {rotation:matrix.m13,pitch:matrix.m23,lift:matrix.m42,
+      lights:light?Number(getComputedStyle(light).opacity):0,
+      active:document.querySelectorAll('.pm-tilting').length,
+      owns:node.classList.contains('pm-tilting')};
+  });
+  await page.mouse.move(box.x+box.width*.18,y,{steps:4});
+  await page.waitForTimeout(240);
+  const left=await read();
+  if (!await surface.evaluate(node=>node.isConnected)) {
+    await surface.dispose();
+    assert.ok(attempt<2,label+' was repeatedly replaced during the pointer probe');
+    return assertWidgetTilt(page,selector,label,attempt+1);
+  }
+  assert.ok(left.owns && left.active===1,label+' must own the effect without rotating ancestor panels: '+JSON.stringify({left,box}));
+  assert.ok(Math.abs(left.rotation)>.008 && left.lift<-1,label+' must visibly tilt and lift');
+  await page.mouse.move(box.x+box.width*.82,y,{steps:4});
+  await page.waitForTimeout(240);
+  const right=await read();
+  // The real app refreshes its data and replaces the view every 20 seconds.
+  // Re-probe a fresh surface if that happened between the two pointer positions;
+  // a different DOM node has no obligation to retain the old node's rotation.
+  if (!await surface.evaluate(node=>node.isConnected)) {
+    await surface.dispose();
+    assert.ok(attempt<2,label+' was repeatedly replaced during the pointer probe');
+    return assertWidgetTilt(page,selector,label,attempt+1);
+  }
+  await surface.dispose();
+  assert.ok(left.rotation*right.rotation<0,label+' must follow the pointer across both sides: '+JSON.stringify({left,right,box}));
+  assert.ok(right.lights>.8,label+' must show the pointer light');
+  if (['nested fixture','full leaderboard'].includes(label)) await snapshot(page,'desktop-tilt-'+label.replaceAll(' ','-'));
+  await page.mouse.move(0,0);
+  await page.waitForFunction(selector=>{
+    const matrix=new DOMMatrixReadOnly(getComputedStyle(document.querySelector(selector)).transform);
+    return Math.abs(matrix.m13)<.0001 && Math.abs(matrix.m23)<.0001 && Math.abs(matrix.m42)<.05;
+  },selector);
+  assert.equal((await read()).active,0,label+' must settle on pointer exit');
+  console.log('PASS pointer',label);
+}
+async function assertStaticPointer(page,selector,label) {
+  await page.locator(selector).first().hover();
+  await page.waitForTimeout(80);
+  const result=await page.locator(selector).first().evaluate(node=>{
+    const matrix=new DOMMatrixReadOnly(getComputedStyle(node).transform);
+    return {rotation:Math.abs(matrix.m13)+Math.abs(matrix.m23),active:document.querySelectorAll('.pm-tilting').length};
+  });
+  assert.equal(result.active,0,label+' must not activate tilt');
+  assert.ok(result.rotation<.0001,label+' must remain level');
+  await page.mouse.move(0,0);
+}
+async function pointAtStatistic(page) {
+  const statistic=page.locator('.stat-card').first();
+  await statistic.scrollIntoViewIfNeeded();
+  // Complete the scroll before moving the mouse: scrolling intentionally resets
+  // tilt, and a test runner's automatic scroll can arrive after locator.hover().
+  await page.waitForTimeout(100);
+  const box=await statistic.boundingBox();
+  await page.mouse.move(0,0);
+  await page.mouse.move(box.x+box.width*.25,box.y+box.height*.5,{steps:3});
+  await page.waitForFunction(()=>!!document.querySelector('.pm-tilting'),null,{timeout:2500});
 }
 async function pickFlow(page,config,writes) {
   await navigate(page,'profile','.profile-account-actions');
@@ -143,11 +231,14 @@ async function testSize(browser,config) {
   if (noEnhancement) await context.route('**/js/immersive-motion.js',route=>route.abort());
   const page=await context.newPage();
   const errors=[],writes=[];
+  const checkTilt=name==='desktop';
   page.on('pageerror',error=>errors.push(error.message));
   page.on('request',request=>{if (request.method()==='POST' && new URL(request.url()).pathname==='/api/pick') writes.push(request);});
   try {
     await page.goto(origin,{waitUntil:'domcontentloaded',timeout:25000});
     await visible(page,'#account-form');
+    if (checkTilt) await assertWidgetTilt(page,'.auth-card','login widget');
+    if (reduced || width<=430) await assertStaticPointer(page,'.auth-card','touch / reduced login');
     await snapshot(page,name+'-login');
     await noOverflow(page,name+' login');
     if (width<=620) {
@@ -182,6 +273,19 @@ async function testSize(browser,config) {
     await noOverflow(page,name+' dashboard');
     assert.equal(await page.locator('.stat-card').count(),4);
     await snapshot(page,name+'-dashboard');
+    if (checkTilt) {
+      for (const [selector,label] of [
+        ['.stat-card','statistic'],['.paetzold-stadium-hero','photo hero'],
+        ['.pick-hero','current pick'],['.game-card','nested fixture'],
+        ['.ranking-panel','dashboard leaderboard'],['.recent-panel','recent picks'],
+        ['.dashboard-aside>.rule-note','rules widget']
+      ]) await assertWidgetTilt(page,selector,label);
+      await pointAtStatistic(page);
+      await page.evaluate(()=>window.scrollBy(0,40));
+      await page.waitForFunction(()=>!document.querySelector('.pm-tilting'));
+      await page.mouse.move(0,0);
+    }
+    if (reduced || width<=430) await assertStaticPointer(page,'.stat-card','touch / reduced statistic');
     if (!noEnhancement && !reduced) await assertQuietRefresh(page);
 
     await navigate(page,'games','.games-grid.full');
@@ -203,6 +307,10 @@ async function testSize(browser,config) {
     assert.ok(matrix.content>matrix.visible,'only the season matrix should scroll horizontally');
     await page.locator('.table-scroll').press('ArrowRight');
     await snapshot(page,name+'-season');
+    if (checkTilt) {
+      await assertWidgetTilt(page,'.season-panel','season matrix');
+      await assertWidgetTilt(page,'.season-milestones>div','season milestone');
+    }
 
     await navigate(page,'leaderboard','.leaderboard-panel');
     assert.ok(await page.locator('.leaderboard-row').count()>0);
@@ -214,14 +322,22 @@ async function testSize(browser,config) {
     }
     assert.ok(!(await page.locator('.leaderboard-panel').innerText()).includes('Ausgeschieden'));
     await snapshot(page,name+'-leaderboard');
+    if (checkTilt) await assertWidgetTilt(page,'.leaderboard-panel','full leaderboard');
 
     await navigate(page,'profile','.profile-grid');
     await statsMatch(page);
     assert.ok(await page.locator('.inventory-team').count()>=30);
     await noOverflow(page,name+' profile');
     await snapshot(page,name+'-profile');
+    if (checkTilt) {
+      for (const [selector,label] of [
+        ['.inventory-team','nested team tile'],['.history-panel','pick history'],
+        ['.account-setting','nested account widget']
+      ]) await assertWidgetTilt(page,selector,label);
+    }
     await page.locator('.page-content [data-action="rules"]').first().click();
     await visible(page,'dialog[open]');
+    if (checkTilt) await assertWidgetTilt(page,'#modal','native dialog');
     await page.locator('dialog [data-action="close-modal"]').first().click();
     await page.locator('.inventory-team').first().click();
     await visible(page,'dialog[open] .team-info-row');
@@ -229,6 +345,9 @@ async function testSize(browser,config) {
 
     if (!noEnhancement && !reduced) {
       await navigate(page,'dashboard','.stats-grid');
+      if (checkTilt) {
+        await pointAtStatistic(page);
+      }
       await page.emulateMedia({reducedMotion:'reduce'});
       await statsMatch(page);
       // matchMedia change listeners are delivered at the next rendering update.
@@ -236,6 +355,7 @@ async function testSize(browser,config) {
       await page.waitForFunction(()=>document.getAnimations().every(a=>a.playState!=='running'),null,{timeout:2500});
       const transitions=await page.locator('button,input,select').evaluateAll(nodes=>nodes.every(node=>getComputedStyle(node).transitionDuration.split(',').every(value=>parseFloat(value)===0)));
       assert.ok(transitions,'reduced motion must override legacy important control transitions');
+      await assertStaticPointer(page,'.stat-card','live reduced motion preference');
       await page.emulateMedia({reducedMotion:'no-preference'});
     }
     if (reduced) {
