@@ -234,6 +234,8 @@ async function testSize(browser,config) {
       // matchMedia change listeners are delivered at the next rendering update.
       // Wait for that update instead of asserting during the same task.
       await page.waitForFunction(()=>document.getAnimations().every(a=>a.playState!=='running'),null,{timeout:2500});
+      const transitions=await page.locator('button,input,select').evaluateAll(nodes=>nodes.every(node=>getComputedStyle(node).transitionDuration.split(',').every(value=>parseFloat(value)===0)));
+      assert.ok(transitions,'reduced motion must override legacy important control transitions');
       await page.emulateMedia({reducedMotion:'no-preference'});
     }
     if (reduced) {

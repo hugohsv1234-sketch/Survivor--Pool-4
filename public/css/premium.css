@@ -920,7 +920,12 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,
   .page-content .hero-main h2 {font-size:21px!important;}
 }
 @media(prefers-reduced-motion:reduce) {
-  *,*::before,*::after {animation:none!important;transition:none!important;scroll-behavior:auto!important;}
+  /* The established stylesheet contains !important component transitions.
+     Match them with the app/dialog IDs so reduced motion always takes priority. */
+  *,*::before,*::after,
+  html body #app *,html body #app *::before,html body #app *::after,
+  html body #modal,html body #modal *,html body #modal::backdrop,
+  html body #toast,html body #toast * {animation:none!important;transition:none!important;scroll-behavior:auto!important;}
   .pm-reveal,.pm-wait,.pm-visible,.pm-route-enter {opacity:1!important;translate:none!important;filter:none!important;}
   .motion-tap-ripple,.pm-hover::before {display:none!important;}
   .page-content .pm-hover,.page-content .pm-hover:hover,.cinematic-dashboard .paetzold-stadium-hero .paetzold-player,
