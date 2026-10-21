@@ -1,289 +1,384 @@
-/* ===================================================================
-   SURVIVOR POOL / PREMIUM MOTION DIRECTOR
-   The app owns content, routing, picks, scores and authentication.
-   This file changes only visual presentation. No external dependencies.
-   =================================================================== */
+/* Survivor Pool · presentation director
+ * No requests, routing, state, eligibility or form handling live here.
+ * Native controls are usable immediately, including while animations play.
+ */
 (() => {
   'use strict';
-
   const root = document.querySelector('#app');
   if (!root) return;
 
-  const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
-  const finePointer = window.matchMedia?.('(hover: hover) and (pointer: fine)');
-  const softEase = progress => 1 - Math.pow(1 - progress, 3);
-
-  // Avoid timing expensive layout work inside pointer and scroll handlers.
-  const motion = {x:0,y:0,scroll:0};
-  let stage = null;
-  let frame = 0;
-  let lastRoute = null;
+  const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+  const fine = window.matchMedia?.('(hover: hover) and (pointer: fine)');
+  const EASE = 'cubic-bezier(.22,.8,.24,1)';
+  const counters = new Map();
+  const counterFrames = new Map();
+  const animations = new Set();
+  const ripples = new Map();
+  const markers = new Map();
   let revealObserver = null;
-  let motionEnabled = !reduceMotion?.matches;
-  let counted = new Map();
-  let lastReveal = new WeakSet();
-  let previousDisplay = null;
-
+  let renderFrame = 0, pointerFrame = 0, stageFrame = 0;
+  let currentPage = null, lastSignature = null, lastViewer = null;
+  let rowPositions = new Map(), cardStates = new Map();
+  let hover = null, point = null, stage = null;
+  let heroPoint = {x:0,y:0};
+  let disposed = false;
+  const enabled = () => !reduced?.matches && !document.hidden && !disposed;
+  const accentSelector = '.game-card,.stat-card,.inventory-team';
   const revealSelectors = [
-    '.stats-grid .stat-card',
-    '.cinematic-dashboard .broadcast-pick-title',
-    '.cinematic-dashboard .pick-hero',
-    '.cinematic-dashboard .section-heading',
-    '.cinematic-dashboard .game-card',
-    '.cinematic-dashboard .ranking-panel',
-    '.cinematic-dashboard .recent-panel',
-    '.cinematic-dashboard .mini-player',
-    '.cinematic-dashboard .recent-pick',
-    '.page-content .page-heading',
-    '.games-grid.full .game-card',
-    '.season-panel',
-    '.season-milestones > div',
-    '.leaderboard-panel .leaderboard-row',
-    '.profile-grid > .panel',
-    '.team-inventory .inventory-team',
-    '.history-panel .history-pick',
-    '.account-settings-panel',
-    '.account-settings-grid .account-setting',
-    '.admin-panel',
-    '.auth-card',
-    '.rules-list > div'
+    '.page-heading', '.stats-grid .stat-card', '.broadcast-pick-title',
+    '.pick-hero', '.section-heading', '.game-card', '.ranking-panel',
+    '.recent-panel', '.season-panel', '.season-milestones>div',
+    '.leaderboard-row', '.profile-grid>.panel', '.inventory-team',
+    '.history-pick', '.account-settings-panel', '.account-setting',
+    '.admin-panel', '.empty-state', '.rule-note'
   ].join(',');
 
-  const accents = [
-    '.game-card','.stat-card','.inventory-team',
-    '.ranking-panel','.recent-panel','.history-pick',
-    '.leaderboard-row','.account-setting'
-  ].join(',');
-
-  function makeObserver() {
-    if (!('IntersectionObserver' in window)) return;
-    revealObserver = new IntersectionObserver((entries, observer) => {
-      for (const entry of entries) {
-        if (!entry.isIntersecting) continue;
-        entry.target.classList.remove('pm-wait');
-        entry.target.classList.add('pm-visible');
-        observer.unobserve(entry.target);
-      }
-    }, {rootMargin:'0px 0px 54px 0px',threshold:0.035});
+  function play(node, keyframes, options) {
+    if (!enabled() || !node?.isConnected || !node.animate) return;
+    const animation = node.animate(keyframes, {duration:440,easing:EASE,...options});
+    animations.add(animation);
+    animation.finished.then(() => animations.delete(animation), () => animations.delete(animation));
+    return animation;
   }
 
-  function releaseHiddenElements() {
+  function finishCounter(record) {
+    cancelAnimationFrame(record.frame);
+    if (record.text.isConnected) record.text.textContent = record.final;
+    record.node.classList.remove('pm-value-updated');
+    counterFrames.delete(record.node);
+  }
+
+  function stopEffects() {
+    for (const animation of animations) animation.cancel();
+    animations.clear();
+    for (const record of counterFrames.values()) finishCounter(record);
+    for (const [node, timer] of ripples) { clearTimeout(timer); node.remove(); }
+    ripples.clear();
+    revealObserver?.disconnect();
     root.querySelectorAll('.pm-wait').forEach(node => {
-      node.classList.remove('pm-wait');
-      node.classList.add('pm-visible');
+      node.classList.remove('pm-wait');node.classList.add('pm-visible');
     });
   }
 
-  function getRoute() {
-    if (root.querySelector('.account-shell')) return 'auth';
+  function routeSignature() {
+    const form = root.querySelector('#account-form');
+    if (form) return 'auth:' + form.dataset.mode;
     const active = root.querySelector('.sidebar .nav-link[aria-current="page"]');
-    if (active) return active.getAttribute('href') || 'dashboard';
-    return location.hash || 'dashboard';
+    const route = active?.getAttribute('href') || location.hash || '#dashboard';
+    const week = root.querySelector('#week-select')?.value || '';
+    const filter = root.querySelector('.filter .active')?.dataset.filter || '';
+    return [route,week,filter].join(':');
   }
 
-  // The DOM is generated by the existing app. Observe route changes instead
-  // of intercepting links or delaying real user actions.
-  function revealPage() {
-    if (!motionEnabled) return;
-    const current = root.querySelector('.page-content') || root.querySelector('.auth-card');
-    if (!current) return;
-    current.classList.add('pm-route-enter');
-    current.addEventListener('animationend', () => current.classList.remove('pm-route-enter'), {once:true});
-
-    if (!revealObserver) return;
-    const items = Array.from(current.querySelectorAll(revealSelectors));
-    const shortlist = items.slice(0, 150); // bound work for very long tables
-    shortlist.forEach((element, index) => {
-      if (lastReveal.has(element)) return;
-      lastReveal.add(element);
-      element.classList.add('pm-reveal','pm-wait');
-      const siblings = element.parentElement?.children;
-      const order = siblings ? Array.prototype.indexOf.call(siblings, element) : index;
-      element.style.setProperty('--pm-delay', Math.min(6, Math.max(0, order)) * 48 + 'ms');
-      revealObserver.observe(element);
-    });
+  function animateCounter(card, route) {
+    const node = card.querySelector('strong');
+    if (!node) return;
+    const text = Array.from(node.childNodes).find(child =>
+      child.nodeType === 3 && /^\s*\d+(?:[.,]\d+)?\s*$/.test(child.textContent));
+    if (!text) return;
+    const final = text.textContent;
+    const raw = final.trim();
+    const value = Number(raw.replace(',', '.'));
+    if (!Number.isFinite(value) || value > 999999) return;
+    const label = card.querySelector('div>span')?.textContent || '';
+    const key = route.split(':')[0] + ':' + label;
+    const previous = counters.get(key);
+    counters.set(key,value);
+    if (!enabled() || previous === value || value === 0 && previous === undefined) return;
+    const old = counterFrames.get(node);
+    if (old) finishCounter(old);
+    const unit = node.querySelector('small')?.textContent || '';
+    // Assistive technology has the final confirmed value throughout the effect.
+    node.setAttribute('aria-label',raw + (unit === '%' ? ' Prozent' : unit));
+    const start = previous !== undefined && Math.abs(value-previous) < 1000 ? previous : 0;
+    const digits = raw.match(/[.,](\d+)/)?.[1].length || 0;
+    const comma = raw.includes(',');
+    const record = {node,text,final,frame:0};
+    counterFrames.set(node,record);
+    node.classList.add('pm-value-updated');
+    let began = null;
+    const tick = timestamp => {
+      if (!enabled() || !text.isConnected) {finishCounter(record);return;}
+      if (began === null) began = timestamp;
+      const progress = Math.min(1,(timestamp-began)/620);
+      const next = (start + (value-start)*(1-Math.pow(1-progress,3))).toFixed(digits);
+      text.textContent = comma ? next.replace('.',',') : next;
+      if (progress < 1) record.frame = requestAnimationFrame(tick);
+      else finishCounter(record);
+    };
+    record.frame = requestAnimationFrame(tick);
   }
 
-  // Numbers are *never* recomputed. We animate only their visible text node
-  // from an old number to the already-confirmed value supplied by the API.
-  // The final number remains unchanged and the full final value is announced.
-  function animateCounters(route) {
-    const cards = root.querySelectorAll('.page-content .stats-grid .stat-card');
-    cards.forEach((card, index) => {
-      const node = card.querySelector('strong');
-      if (!node) return;
-      const textNode = Array.from(node.childNodes).find(child =>
-        child.nodeType === 3 && /^\s*\d+\s*$/.test(child.textContent));
-      if (!textNode) return;
-      const destination = Number(textNode.textContent.trim());
-      if (!Number.isSafeInteger(destination) || destination < 0 || destination > 9999) return;
-      const label = card.querySelector('div span')?.textContent.trim() || String(index);
-      const key = route + ':' + label;
-      const previous = counted.get(key);
-      counted.set(key, destination);
-      if (!motionEnabled || previous === destination) return;
-      const startValue = previous !== undefined && Math.abs(previous - destination) < 500 ? previous : 0;
-      if (startValue === destination) return;
-      const unit = node.querySelector('small')?.textContent || '';
-      node.setAttribute('aria-label', destination + (unit === '%' ? ' Prozent' : ''));
-      node.classList.add('pm-value-updated');
-      const duration = Math.min(720, 430 + Math.abs(destination-startValue)*22);
-      let start = null;
-      const tick = timestamp => {
-        if (!textNode.isConnected) return; // app re-rendered during animation
-        if (!motionEnabled) {
-          textNode.textContent = destination;
-          return;
+  function reveal(node, index, signature) {
+    node.classList.remove('pm-wait');node.classList.add('pm-visible');
+    if (!enabled()) return;
+    const row = node.matches('.leaderboard-row,.history-pick,.inventory-team');
+    play(node,[
+      {opacity:.38,translate:row ? '-5px 7px' : '0 14px'},
+      {opacity:1,translate:'0 0'}
+    ],{duration:row?440:540,delay:Math.min(index,5)*32,fill:'backwards'});
+    if (node.matches('.stat-card')) animateCounter(node,signature);
+  }
+
+  function prepareReveals(page, signature) {
+    const nodes = Array.from(page.querySelectorAll(revealSelectors)).slice(0,180);
+    if ('IntersectionObserver' in window) {
+      revealObserver = new IntersectionObserver((entries, observer) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting || !entry.target.isConnected) continue;
+          const index = Number(entry.target.dataset.pmOrder || 0);
+          reveal(entry.target,index,signature);
+          observer.unobserve(entry.target);
         }
-        if (start === null) start=timestamp;
-        const t = Math.min(1, (timestamp-start) / duration);
-        const visual = Math.round(startValue + (destination-startValue)*softEase(t));
-        textNode.textContent = visual;
-        if (t < 1) requestAnimationFrame(tick);
-        else {
-          textNode.textContent = destination;
-          node.classList.remove('pm-value-updated');
-        }
-      };
-      requestAnimationFrame(tick);
-    });
+      },{rootMargin:'0px 0px 32px 0px',threshold:.025});
+      nodes.forEach((node,index) => {
+        node.classList.add('pm-reveal','pm-wait');
+        node.dataset.pmOrder = String(index%6);
+        revealObserver.observe(node);
+      });
+    } else {
+      nodes.forEach((node,index) => reveal(node,index%6,signature));
+    }
+    for (const track of page.querySelectorAll('.public-bets-bar,.pool-pick-rate-track')) {
+      for (const bar of track.children) play(bar,[{scale:'0 1'},{scale:'1 1'}],{duration:650});
+    }
+    const progress = root.querySelector('.season-progress i');
+    if (progress) play(progress,[{scale:'0 1'},{scale:'1 1'}],{duration:700});
   }
 
-  function progressEffects(current) {
-    if (!motionEnabled) return;
-    const targets = current.querySelectorAll(
-      '.public-bets-bar, .pool-pick-rate-track, .season-progress');
-    targets.forEach((bar, index) => {
-      // Uses the already-rendered CSS percentage; no betting or pool
-      // statistics are modified or recalculated.
-      bar.classList.add('pm-progress','pm-visible');
-      bar.style.setProperty('--pm-delay', Math.min(index,5)*45+'ms');
-    });
+  function positionMarker(parent, active, key, horizontal, animate) {
+    if (!parent || !active || !parent.getClientRects().length) return;
+    const p = parent.getBoundingClientRect(), r = active.getBoundingClientRect();
+    const next = horizontal
+      ? {x:r.left-p.left+9,y:0,w:Math.max(8,r.width-18),h:3}
+      : {x:0,y:r.top-p.top+14,w:3,h:Math.max(8,r.height-28)};
+    const marker = document.createElement('span');
+    marker.setAttribute('aria-hidden','true');marker.className = 'pm-nav-indicator';
+    Object.assign(marker.style,{width:next.w+'px',height:next.h+'px',transform:`translate(${next.x}px,${next.y}px)`});
+    parent.querySelector('.pm-nav-indicator')?.remove();
+    parent.classList.add('pm-managed-nav');parent.append(marker);
+    const before = markers.get(key);
+    markers.set(key,next);
+    if (animate && before) play(marker,[
+      {transform:`translate(${before.x}px,${before.y}px)`},
+      {transform:`translate(${next.x}px,${next.y}px)`}
+    ],{duration:360});
+  }
+
+  function updateIndicators(animate = true) {
+    const sidebar = root.querySelector('.sidebar nav');
+    positionMarker(sidebar,sidebar?.querySelector('[aria-current="page"]'),'sidebar',false,animate);
+    const bottom = root.querySelector('.bottom-nav');
+    positionMarker(bottom,bottom?.querySelector('[aria-current="page"]'),'bottom',true,animate);
+    for (const segmented of root.querySelectorAll('.segmented')) {
+      const active = segmented.querySelector('button.active');
+      if (!active || !segmented.getClientRects().length) continue;
+      const p = segmented.getBoundingClientRect(), r = active.getBoundingClientRect();
+      const next = {x:r.left-p.left,y:r.top-p.top,w:r.width,h:r.height};
+      const key = segmented.closest('.auth-card') ? 'auth' : 'filter';
+      const old = markers.get(key);
+      markers.set(key,next);
+      const marker = document.createElement('span');
+      marker.setAttribute('aria-hidden','true');marker.className = 'pm-segment-indicator';
+      Object.assign(marker.style,{width:next.w+'px',height:next.h+'px',transform:`translate(${next.x}px,${next.y}px)`});
+      segmented.querySelector('.pm-segment-indicator')?.remove();
+      segmented.classList.add('pm-managed-segments');segmented.append(marker);
+      if (animate && old) play(marker,[
+        {transform:`translate(${old.x}px,${old.y}px) scaleX(${old.w/next.w})`,transformOrigin:'left'},
+        {transform:`translate(${next.x}px,${next.y}px) scaleX(1)`,transformOrigin:'left'}
+      ],{duration:260});
+    }
+  }
+
+  function animateDataUpdates(page, sameView) {
+    const positions = new Map(), states = new Map();
+    for (const row of page.querySelectorAll('.leaderboard-row,.mini-player')) {
+      const user = row.querySelector('.leader-player>span:last-child>small,.mini-player-name>small')?.textContent;
+      if (!user) continue;
+      const key = (row.matches('.leaderboard-row')?'full:':'mini:') + user;
+      const rect = row.getBoundingClientRect();
+      const next = {y:rect.top+window.scrollY,text:row.textContent};
+      const old = rowPositions.get(key);
+      positions.set(key,next);
+      if (!sameView || !old) continue;
+      const delta = old.y-next.y;
+      if (Math.abs(delta)>1 && Math.abs(delta)<700) play(row,[{translate:`0 ${delta}px`},{translate:'0 0'}],{duration:380});
+      if (old.text !== next.text) play(row.querySelector('.leader-player,.mini-player-name'),[{opacity:.4},{opacity:1}],{duration:480});
+    }
+    for (const card of page.querySelectorAll('.game-card')) {
+      const key = card.querySelector('[data-game]')?.dataset.game;
+      if (!key) continue;
+      const value = card.textContent + ':' + (card.querySelector('[aria-pressed="true"]')?.dataset.team || '');
+      states.set(key,value);
+      if (sameView && cardStates.has(key) && cardStates.get(key) !== value) {
+        play(card.querySelector('.game-card-head'),[{opacity:.45},{opacity:1}],{duration:480});
+      }
+    }
+    rowPositions = positions;cardStates = states;
   }
 
   function decorate() {
-    const route = getRoute();
-    const pageChanged = route !== lastRoute;
-    lastRoute = route;
+    renderFrame = 0;
+    if (disposed) return;
     const page = root.querySelector('.page-content') || root.querySelector('.auth-card');
-    if (page && page !== previousDisplay) {
-      previousDisplay = page;
-      // The app re-renders on refresh even if the route is unchanged. Avoid
-      // replaying entry animations every 20 seconds on the same page.
-      if (pageChanged) {
-        revealPage();
-        progressEffects(page);
+    if (!page || page === currentPage) return;
+    const signature = routeSignature();
+    const changedView = signature !== lastSignature;
+    const viewer = root.querySelector('.sidebar-user small')?.textContent || 'auth';
+    if (viewer !== lastViewer) {counters.clear();markers.clear();rowPositions.clear();cardStates.clear();}
+    lastViewer = viewer;
+    stopEffects();resetHover();
+    currentPage = page;
+    stage = root.querySelector('.paetzold-stadium-hero');
+    heroPoint = {x:0,y:0};
+    page.querySelectorAll(accentSelector).forEach(node => node.classList.add('pm-hover'));
+    updateIndicators(changedView);
+    if (changedView && enabled()) {
+      page.classList.add('pm-route-enter');
+      if (!page.matches('.auth-card')) play(page,[{opacity:.65,translate:'0 5px'},{opacity:1,translate:'0 0'}],{duration:330});
+      prepareReveals(page,signature);
+      if (page.matches('.auth-card')) {
+        play(page,[{opacity:.5,translate:'0 12px',scale:'.985'},{opacity:1,translate:'0 0',scale:'1'}],{duration:460});
       }
-      // Always read the final API-provided values even on background refresh.
-      animateCounters(route);
-    }
-    // Existing hover tilt and click-ripple implementation is kept in app.js;
-    // do not install competing handlers for the same user interaction.
-    root.querySelectorAll(accents).forEach(el => el.classList.add('pm-hover'));
-    schedule();
-  }
-
-  function adjustStage() {
-    frame = 0;
-    if (!motionEnabled) return;
-    if (!stage?.isConnected) stage = root.querySelector('.paetzold-stadium-hero');
-    if (!stage) return;
-    const rect = stage.getBoundingClientRect();
-    if (rect.bottom < -100 || rect.top > innerHeight + 100) return;
-    const normalized = Math.max(-1,Math.min(1,
-      (innerHeight*.55-(rect.top+rect.height*.5))/Math.max(320,innerHeight)));
-    stage.style.setProperty('--hero-scroll-y',(normalized*11).toFixed(1)+'px');
-    stage.style.setProperty('--hero-drift-x',(motion.x*13).toFixed(1)+'px');
-    stage.style.setProperty('--hero-drift-y',(motion.y*8).toFixed(1)+'px');
-    stage.style.setProperty('--hero-heading-x',(-motion.x*3).toFixed(1)+'px');
-  }
-  function schedule() {
-    if (!frame && motionEnabled && !document.hidden) frame=requestAnimationFrame(adjustStage);
-  }
-  function setPointerPosition(event) {
-    if (!motionEnabled) return;
-    const hero = event.target?.closest?.('.paetzold-stadium-hero');
-    if (!hero) return;
-    const touch = event.pointerType === 'touch';
-    if (!touch && !finePointer?.matches) return;
-    stage = hero;
-    const rect = hero.getBoundingClientRect();
-    const strength = touch ? .33 : 1;
-    motion.x = Math.max(-1,Math.min(1,(event.clientX-rect.left)/Math.max(1,rect.width)*2-1))*strength;
-    motion.y = Math.max(-1,Math.min(1,(event.clientY-rect.top)/Math.max(1,rect.height)*2-1))*strength;
-    schedule();
-  }
-  function resetPointer(event) {
-    const hero = event.target?.closest?.('.paetzold-stadium-hero');
-    if (event.type === 'pointerout' && (!hero || hero.contains(event.relatedTarget))) return;
-    if (event.type !== 'pointerout' && event.pointerType !== 'touch') return;
-    motion.x=0;
-    motion.y=0;
-    schedule();
-  }
-  document.addEventListener('pointermove',setPointerPosition,{passive:true});
-  document.addEventListener('pointerout',resetPointer,{passive:true});
-  document.addEventListener('pointerup',resetPointer,{passive:true});
-  document.addEventListener('pointercancel',resetPointer,{passive:true});
-  window.addEventListener('scroll',schedule,{passive:true});
-  window.addEventListener('resize',schedule,{passive:true});
-
-  // The backdrop glow follows the pointer only while over a suitable card.
-  // One RAF for all candidates and no forced update to layout/scroll state.
-  let hoverElement = null;
-  let hoverEvent = null;
-  let hoverFrame = 0;
-  document.addEventListener('pointermove', event => {
-    if (!motionEnabled || !finePointer?.matches || event.pointerType === 'touch') return;
-    const element=event.target?.closest?.(accents);
-    if (!element) return;
-    hoverElement=element;
-    hoverEvent={x:event.clientX,y:event.clientY};
-    if (hoverFrame) return;
-    hoverFrame=requestAnimationFrame(()=>{
-      hoverFrame=0;
-      const current=hoverElement;
-      if (!current?.isConnected || !hoverEvent) return;
-      const r=current.getBoundingClientRect();
-      current.style.setProperty('--pm-x',((hoverEvent.x-r.left)/Math.max(1,r.width)*100).toFixed(1)+'%');
-      current.style.setProperty('--pm-y',((hoverEvent.y-r.top)/Math.max(1,r.height)*100).toFixed(1)+'%');
-    });
-  }, {passive:true});
-
-  // Route updates are delivered by app.innerHTML replacement. The observer
-  // watches only top-level children to avoid feedback from decorative classes.
-  if ('MutationObserver' in window) {
-    const changes = new MutationObserver(decorate);
-    changes.observe(root,{childList:true,subtree:false});
-  }
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) {decorate();schedule();}
-  });
-
-  reduceMotion?.addEventListener?.('change', () => {
-    motionEnabled = !reduceMotion.matches;
-    if (!motionEnabled) {
-      if (frame) cancelAnimationFrame(frame);
-      if (hoverFrame) cancelAnimationFrame(hoverFrame);
-      frame = hoverFrame = 0;
-      revealObserver?.disconnect();
-      releaseHiddenElements();
-      root.querySelectorAll('.pm-reveal,.pm-route-enter,.pm-progress').forEach(el=>{
-        el.classList.remove('pm-reveal','pm-route-enter','pm-progress');
-      });
-      const hero=root.querySelector('.paetzold-stadium-hero');
-      ['--hero-scroll-y','--hero-drift-x','--hero-drift-y','--hero-heading-x']
-        .forEach(prop=>hero?.style.removeProperty(prop));
-      motion.x=motion.y=0;
     } else {
-      lastReveal = new WeakSet();
-      revealObserver?.disconnect();
-      makeObserver();
-      lastRoute=null;
-      decorate();
+      page.querySelectorAll('.stat-card').forEach(card => animateCounter(card,signature));
     }
-  });
+    animateDataUpdates(page,!changedView);
+    lastSignature = signature;
+    scheduleStage();
+  }
 
-  if (motionEnabled) makeObserver();
+  function scheduleDecorate() {
+    if (!renderFrame && !disposed) renderFrame = requestAnimationFrame(decorate);
+  }
+  const changes = typeof MutationObserver === 'function' ? new MutationObserver(scheduleDecorate) : null;
+  changes?.observe(root,{childList:true});
+
+  function resetHover() {
+    if (hover) {
+      for (const prop of ['--pm-tilt-x','--pm-tilt-y','--pm-light-x','--pm-light-y']) hover.style.removeProperty(prop);
+    }
+    hover = null;point = null;
+    if (pointerFrame) cancelAnimationFrame(pointerFrame);
+    pointerFrame = 0;
+  }
+
+  function paintPointer() {
+    pointerFrame = 0;
+    if (!enabled() || !fine?.matches || !hover?.isConnected || !point) return;
+    const r = hover.getBoundingClientRect();
+    const x = Math.max(0,Math.min(r.width,point.x-r.left));
+    const y = Math.max(0,Math.min(r.height,point.y-r.top));
+    hover.style.setProperty('--pm-light-x',x.toFixed(1)+'px');
+    hover.style.setProperty('--pm-light-y',y.toFixed(1)+'px');
+    hover.style.setProperty('--pm-tilt-x',(-(y/Math.max(1,r.height)-.5)*1.8).toFixed(2)+'deg');
+    hover.style.setProperty('--pm-tilt-y',((x/Math.max(1,r.width)-.5)*1.8).toFixed(2)+'deg');
+  }
+
+  function paintStage() {
+    stageFrame = 0;
+    if (!enabled() || !stage?.isConnected || !fine?.matches) return;
+    const r = stage.getBoundingClientRect();
+    if (r.bottom<0 || r.top>window.innerHeight) return;
+    const offset = Math.max(-1,Math.min(1,(window.innerHeight*.48-r.top-r.height*.5)/window.innerHeight));
+    stage.style.setProperty('--hero-scroll-y',(offset*9).toFixed(1)+'px');
+    stage.style.setProperty('--hero-drift-x',(heroPoint.x*9).toFixed(1)+'px');
+    stage.style.setProperty('--hero-drift-y',(heroPoint.y*5).toFixed(1)+'px');
+    stage.style.setProperty('--hero-heading-x',(-heroPoint.x*2).toFixed(1)+'px');
+  }
+  function scheduleStage() {
+    if (enabled() && fine?.matches && !stageFrame) stageFrame = requestAnimationFrame(paintStage);
+  }
+
+  document.addEventListener('pointermove',event => {
+    if (!enabled() || !fine?.matches || event.pointerType === 'touch') return;
+    const target = event.target?.closest?.(accentSelector);
+    if (target !== hover) {resetHover();hover = target;}
+    if (target) {
+      point = {x:event.clientX,y:event.clientY};
+      if (!pointerFrame) pointerFrame = requestAnimationFrame(paintPointer);
+    }
+    const hero = event.target?.closest?.('.paetzold-stadium-hero');
+    if (hero) {
+      stage = hero;
+      const r = hero.getBoundingClientRect();
+      heroPoint = {
+        x:Math.max(-1,Math.min(1,(event.clientX-r.left)/Math.max(1,r.width)*2-1)),
+        y:Math.max(-1,Math.min(1,(event.clientY-r.top)/Math.max(1,r.height)*2-1))
+      };
+      scheduleStage();
+    }
+  },{passive:true});
+  document.addEventListener('pointerout',event => {
+    if (hover && !hover.contains(event.relatedTarget)) resetHover();
+    if (stage && !stage.contains(event.relatedTarget)) {heroPoint = {x:0,y:0};scheduleStage();}
+  },{passive:true});
+  function releasePointer() {resetHover();heroPoint = {x:0,y:0};scheduleStage();}
+  document.addEventListener('pointercancel',releasePointer,{passive:true});
+  document.addEventListener('pointerup',event => {if (event.pointerType === 'touch') releasePointer();},{passive:true});
+  document.addEventListener('pointerdown',event => {
+    if (!enabled() || event.button>0) return;
+    const target = event.target?.closest?.('button,.panel-link,.nav-link,.bottom-nav a');
+    if (!target || target.matches(':disabled,[aria-disabled="true"]')) return;
+    const r = target.getBoundingClientRect();
+    const ripple = document.createElement('span');
+    ripple.className = 'motion-tap-ripple';ripple.setAttribute('aria-hidden','true');
+    Object.assign(ripple.style,{
+      left:(event.clientX-r.left)+'px',top:(event.clientY-r.top)+'px',
+      width:Math.max(r.width,r.height)*2+'px',height:Math.max(r.width,r.height)*2+'px'
+    });
+    target.append(ripple);
+    const remove = () => {clearTimeout(ripples.get(ripple));ripples.delete(ripple);ripple.remove();};
+    ripples.set(ripple,setTimeout(remove,650));
+    ripple.addEventListener('animationend',remove,{once:true});
+  },{passive:true});
+  window.addEventListener('scroll',scheduleStage,{passive:true});
+  window.addEventListener('resize',() => {updateIndicators(false);scheduleStage();},{passive:true});
+
+  // A dialog can replace its content while already open. Watch only the native
+  // dialog's shell; focus, Escape, dismissal and confirmation stay app-owned.
+  const modal = document.querySelector('#modal');
+  const dialogChanges = typeof MutationObserver === 'function' && modal ? new MutationObserver(() => {
+    if (!modal.open || !enabled()) return;
+    play(modal,[{opacity:.3,translate:'0 14px',scale:'.975'},{opacity:1,translate:'0 0',scale:'1'}],{duration:260});
+    modal.querySelectorAll('.rules-list>div').forEach((row,index) =>
+      play(row,[{opacity:.5,translate:'0 7px'},{opacity:1,translate:'0 0'}],{duration:360,delay:index*35}));
+  }) : null;
+  dialogChanges?.observe(modal,{childList:true,attributes:true,attributeFilter:['open']});
+
+  function preferencesChanged() {
+    stopEffects();resetHover();
+    if (stageFrame) cancelAnimationFrame(stageFrame);
+    stageFrame = 0;
+    if (stage) ['--hero-scroll-y','--hero-drift-x','--hero-drift-y','--hero-heading-x'].forEach(prop => stage.style.removeProperty(prop));
+    heroPoint = {x:0,y:0};
+    if (enabled()) scheduleStage();
+  }
+  reduced?.addEventListener?.('change',preferencesChanged);
+  fine?.addEventListener?.('change',preferencesChanged);
+  document.addEventListener('visibilitychange',() => {
+    document.documentElement?.classList.toggle('pm-paused',document.hidden);
+    if (document.hidden) {
+      stopEffects();resetHover();
+      if (stageFrame) cancelAnimationFrame(stageFrame);
+      if (renderFrame) cancelAnimationFrame(renderFrame);
+      stageFrame = renderFrame = 0;
+    } else {scheduleDecorate();scheduleStage();}
+  });
+  window.addEventListener('pagehide',() => {
+    disposed = true;stopEffects();resetHover();
+    if (renderFrame) cancelAnimationFrame(renderFrame);
+    if (stageFrame) cancelAnimationFrame(stageFrame);
+    renderFrame = stageFrame = 0;
+    changes?.disconnect();dialogChanges?.disconnect();
+  });
+  window.addEventListener('pageshow',event => {
+    if (!event.persisted) return;
+    disposed = false;currentPage = null;
+    changes?.observe(root,{childList:true});
+    if (modal) dialogChanges?.observe(modal,{childList:true,attributes:true,attributeFilter:['open']});
+    document.documentElement?.classList.remove('pm-paused');
+    scheduleDecorate();
+  });
   decorate();
 })();
