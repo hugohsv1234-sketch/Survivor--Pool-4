@@ -101,7 +101,9 @@ async function pickFlow(page,config,writes) {
   await page.locator('#week-select').selectOption(String(before.current_week+1));
   await visible(page,'.games-grid.full .team-choice[aria-disabled="true"]');
   assert.equal(await page.locator('.team-choice:not([aria-disabled="true"])').count(),0);
-  await page.locator('.team-choice').first().click();
+  // aria-disabled choices intentionally remain explanatory controls in the
+  // established UI. Force bypasses Playwright's ARIA guard, not app validation.
+  await page.locator('.team-choice').first().click({force:true});
   await visible(page,'dialog[open]');
   assert.equal(await page.locator('dialog [data-action="confirm-pick"]').count(),0,'future fixtures cannot be confirmed');
   await page.keyboard.press('Escape');
