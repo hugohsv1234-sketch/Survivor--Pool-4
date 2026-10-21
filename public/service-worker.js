@@ -1,6 +1,6 @@
 /* Offline app shell only. Never cache private API responses or queue picks.
    Authentication and kickoff checks must always reach the authoritative server. */
-const CACHE = 'survivor-shell-v15';
+const CACHE = 'survivor-shell-v16';
 const SHELL = ['/', '/index.html', '/css/app.css', '/css/premium.css', '/js/app.js', '/js/immersive-motion.js', '/js/transparent-logos.js', '/manifest.json', '/icons/favicon.svg', '/icons/paetzold-silhouette.svg', '/icons/paetzold-player.png', '/icons/nfl-logo-sprite.png', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/maskable-512.png'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL)));

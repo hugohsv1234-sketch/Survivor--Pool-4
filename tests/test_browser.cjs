@@ -58,6 +58,52 @@ async function assertQuietRefresh(page) {
   await statsMatch(page);
   await previous.dispose();
 }
+async function assertWidgetTilt(page,selector,label) {
+  const widget=page.locator(selector).first();
+  await page.mouse.move(0,0);
+  await widget.scrollIntoViewIfNeeded();
+  await page.waitForFunction(()=>document.getAnimations().every(animation=>
+    animation.playState!=='running' || animation.effect?.getComputedTiming().iterations===Infinity));
+  const box=await widget.boundingBox();
+  assert.ok(box && box.width>0 && box.height>0,label+' must remain visible');
+  const y=Math.max(90,box.y+Math.min(22,box.height*.24));
+  const read=()=>widget.evaluate(node=>{
+    const matrix=new DOMMatrixReadOnly(getComputedStyle(node).transform);
+    const light=node.querySelector(':scope>.pm-widget-light');
+    return {rotation:matrix.m13,pitch:matrix.m23,lift:matrix.m42,
+      lights:light?Number(getComputedStyle(light).opacity):0,
+      active:document.querySelectorAll('.pm-tilting').length,
+      owns:node.classList.contains('pm-tilting')};
+  });
+  await page.mouse.move(box.x+box.width*.18,y,{steps:4});
+  await page.waitForTimeout(240);
+  const left=await read();
+  assert.ok(left.owns && left.active===1,label+' must own the effect without rotating ancestor panels');
+  assert.ok(Math.abs(left.rotation)>.008 && left.lift<-1,label+' must visibly tilt and lift');
+  await page.mouse.move(box.x+box.width*.82,y,{steps:4});
+  await page.waitForTimeout(240);
+  const right=await read();
+  assert.ok(left.rotation*right.rotation<0,label+' must follow the pointer across both sides');
+  assert.ok(right.lights>.8,label+' must show the pointer light');
+  if (['nested fixture','full leaderboard'].includes(label)) await snapshot(page,'desktop-tilt-'+label.replaceAll(' ','-'));
+  await page.mouse.move(0,0);
+  await page.waitForFunction(selector=>{
+    const matrix=new DOMMatrixReadOnly(getComputedStyle(document.querySelector(selector)).transform);
+    return Math.abs(matrix.m13)<.0001 && Math.abs(matrix.m23)<.0001 && Math.abs(matrix.m42)<.05;
+  },selector);
+  assert.equal((await read()).active,0,label+' must settle on pointer exit');
+}
+async function assertStaticPointer(page,selector,label) {
+  await page.locator(selector).first().hover();
+  await page.waitForTimeout(80);
+  const result=await page.locator(selector).first().evaluate(node=>{
+    const matrix=new DOMMatrixReadOnly(getComputedStyle(node).transform);
+    return {rotation:Math.abs(matrix.m13)+Math.abs(matrix.m23),active:document.querySelectorAll('.pm-tilting').length};
+  });
+  assert.equal(result.active,0,label+' must not activate tilt');
+  assert.ok(result.rotation<.0001,label+' must remain level');
+  await page.mouse.move(0,0);
+}
 async function pickFlow(page,config,writes) {
   await navigate(page,'profile','.profile-account-actions');
   await page.locator('.profile-account-actions [data-action="logout"]').click();
@@ -143,11 +189,14 @@ async function testSize(browser,config) {
   if (noEnhancement) await context.route('**/js/immersive-motion.js',route=>route.abort());
   const page=await context.newPage();
   const errors=[],writes=[];
+  const checkTilt=name==='desktop';
   page.on('pageerror',error=>errors.push(error.message));
   page.on('request',request=>{if (request.method()==='POST' && new URL(request.url()).pathname==='/api/pick') writes.push(request);});
   try {
     await page.goto(origin,{waitUntil:'domcontentloaded',timeout:25000});
     await visible(page,'#account-form');
+    if (checkTilt) await assertWidgetTilt(page,'.auth-card','login widget');
+    if (reduced || width<=430) await assertStaticPointer(page,'.auth-card','touch / reduced login');
     await snapshot(page,name+'-login');
     await noOverflow(page,name+' login');
     if (width<=620) {
@@ -182,6 +231,20 @@ async function testSize(browser,config) {
     await noOverflow(page,name+' dashboard');
     assert.equal(await page.locator('.stat-card').count(),4);
     await snapshot(page,name+'-dashboard');
+    if (checkTilt) {
+      for (const [selector,label] of [
+        ['.stat-card','statistic'],['.paetzold-stadium-hero','photo hero'],
+        ['.pick-hero','current pick'],['.game-card','nested fixture'],
+        ['.ranking-panel','dashboard leaderboard'],['.recent-panel','recent picks'],
+        ['.dashboard-aside>.rule-note','rules widget']
+      ]) await assertWidgetTilt(page,selector,label);
+      await page.locator('.stat-card').first().hover();
+      await page.waitForFunction(()=>!!document.querySelector('.pm-tilting'));
+      await page.evaluate(()=>window.scrollBy(0,40));
+      await page.waitForFunction(()=>!document.querySelector('.pm-tilting'));
+      await page.mouse.move(0,0);
+    }
+    if (reduced || width<=430) await assertStaticPointer(page,'.stat-card','touch / reduced statistic');
     if (!noEnhancement && !reduced) await assertQuietRefresh(page);
 
     await navigate(page,'games','.games-grid.full');
@@ -203,6 +266,10 @@ async function testSize(browser,config) {
     assert.ok(matrix.content>matrix.visible,'only the season matrix should scroll horizontally');
     await page.locator('.table-scroll').press('ArrowRight');
     await snapshot(page,name+'-season');
+    if (checkTilt) {
+      await assertWidgetTilt(page,'.season-panel','season matrix');
+      await assertWidgetTilt(page,'.season-milestones>div','season milestone');
+    }
 
     await navigate(page,'leaderboard','.leaderboard-panel');
     assert.ok(await page.locator('.leaderboard-row').count()>0);
@@ -214,14 +281,22 @@ async function testSize(browser,config) {
     }
     assert.ok(!(await page.locator('.leaderboard-panel').innerText()).includes('Ausgeschieden'));
     await snapshot(page,name+'-leaderboard');
+    if (checkTilt) await assertWidgetTilt(page,'.leaderboard-panel','full leaderboard');
 
     await navigate(page,'profile','.profile-grid');
     await statsMatch(page);
     assert.ok(await page.locator('.inventory-team').count()>=30);
     await noOverflow(page,name+' profile');
     await snapshot(page,name+'-profile');
+    if (checkTilt) {
+      for (const [selector,label] of [
+        ['.inventory-team','nested team tile'],['.history-panel','pick history'],
+        ['.account-setting','nested account widget']
+      ]) await assertWidgetTilt(page,selector,label);
+    }
     await page.locator('.page-content [data-action="rules"]').first().click();
     await visible(page,'dialog[open]');
+    if (checkTilt) await assertWidgetTilt(page,'#modal','native dialog');
     await page.locator('dialog [data-action="close-modal"]').first().click();
     await page.locator('.inventory-team').first().click();
     await visible(page,'dialog[open] .team-info-row');
@@ -229,6 +304,10 @@ async function testSize(browser,config) {
 
     if (!noEnhancement && !reduced) {
       await navigate(page,'dashboard','.stats-grid');
+      if (checkTilt) {
+        await page.locator('.stat-card').first().hover();
+        await page.waitForFunction(()=>!!document.querySelector('.pm-tilting'));
+      }
       await page.emulateMedia({reducedMotion:'reduce'});
       await statsMatch(page);
       // matchMedia change listeners are delivered at the next rendering update.
@@ -236,6 +315,7 @@ async function testSize(browser,config) {
       await page.waitForFunction(()=>document.getAnimations().every(a=>a.playState!=='running'),null,{timeout:2500});
       const transitions=await page.locator('button,input,select').evaluateAll(nodes=>nodes.every(node=>getComputedStyle(node).transitionDuration.split(',').every(value=>parseFloat(value)===0)));
       assert.ok(transitions,'reduced motion must override legacy important control transitions');
+      await assertStaticPointer(page,'.stat-card','live reduced motion preference');
       await page.emulateMedia({reducedMotion:'no-preference'});
     }
     if (reduced) {

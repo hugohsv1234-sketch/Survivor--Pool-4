@@ -19,11 +19,18 @@
   let renderFrame = 0, pointerFrame = 0, stageFrame = 0;
   let currentPage = null, lastSignature = null, lastViewer = null;
   let rowPositions = new Map(), cardStates = new Map();
-  let hover = null, point = null, stage = null;
+  let hover = null, hoverBounds = null, point = null, stage = null;
   let heroPoint = {x:0,y:0};
   let disposed = false;
   const enabled = () => !reduced?.matches && !document.hidden && !disposed;
-  const accentSelector = '.game-card,.stat-card,.inventory-team';
+  // Nested cards own their pointer effect. Their containing panel stays level,
+  // so moving onto a fixture never stacks two rotations or moves its controls.
+  const widgetSelector = [
+    '.panel', '.broadcast-layout>section', '.game-card', '.stat-card',
+    '.inventory-team', '.pick-hero', '.rule-note', '.account-setting',
+    '.season-milestones>div', '.auth-card', '.paetzold-stadium-hero',
+    '.empty-state', '.notice', '.pick-strip', '.public-bets-widget', '.pool-pick-rate', '#modal'
+  ].join(',');
   const revealSelectors = [
     '.page-heading', '.stats-grid .stat-card', '.broadcast-pick-title',
     '.pick-hero', '.section-heading', '.game-card', '.ranking-panel',
@@ -217,6 +224,20 @@
     rowPositions = positions;cardStates = states;
   }
 
+  function decorateWidgets(page) {
+    const widgets = Array.from(page.querySelectorAll(widgetSelector));
+    if (page.matches(widgetSelector)) widgets.unshift(page);
+    for (const node of widgets) {
+      node.classList.add('pm-widget');
+      if (node.querySelector(':scope>.pm-widget-light')) continue;
+      // A separate decorative layer preserves existing pseudo-elements, status
+      // colours, team logos and text. It never receives pointer or focus events.
+      const light = document.createElement('span');
+      light.className = 'pm-widget-light';light.setAttribute('aria-hidden','true');
+      node.append(light);
+    }
+  }
+
   function decorate() {
     renderFrame = 0;
     if (disposed) return;
@@ -231,7 +252,7 @@
     currentPage = page;
     stage = root.querySelector('.paetzold-stadium-hero');
     heroPoint = {x:0,y:0};
-    page.querySelectorAll(accentSelector).forEach(node => node.classList.add('pm-hover'));
+    decorateWidgets(page);
     updateIndicators(changedView);
     if (changedView && enabled()) {
       page.classList.add('pm-route-enter');
@@ -256,9 +277,10 @@
 
   function resetHover() {
     if (hover) {
+      hover.classList.remove('pm-tilting');
       for (const prop of ['--pm-tilt-x','--pm-tilt-y','--pm-light-x','--pm-light-y']) hover.style.removeProperty(prop);
     }
-    hover = null;point = null;
+    hover = null;hoverBounds = null;point = null;
     if (pointerFrame) cancelAnimationFrame(pointerFrame);
     pointerFrame = 0;
   }
@@ -266,13 +288,18 @@
   function paintPointer() {
     pointerFrame = 0;
     if (!enabled() || !fine?.matches || !hover?.isConnected || !point) return;
-    const r = hover.getBoundingClientRect();
-    const x = Math.max(0,Math.min(r.width,point.x-r.left));
-    const y = Math.max(0,Math.min(r.height,point.y-r.top));
-    hover.style.setProperty('--pm-light-x',x.toFixed(1)+'px');
-    hover.style.setProperty('--pm-light-y',y.toFixed(1)+'px');
-    hover.style.setProperty('--pm-tilt-x',(-(y/Math.max(1,r.height)-.5)*1.8).toFixed(2)+'deg');
-    hover.style.setProperty('--pm-tilt-y',((x/Math.max(1,r.width)-.5)*1.8).toFixed(2)+'deg');
+    const r = hoverBounds;
+    if (!r) return;
+    const x = Math.max(0,Math.min(1,(point.x-r.left)/Math.max(1,r.width)));
+    const y = Math.max(0,Math.min(1,(point.y-r.top)/Math.max(1,r.height)));
+    // Use the resting rectangle, never the rotated rectangle. This avoids a
+    // feedback loop at card edges. Large tables rotate less than small widgets.
+    const angle = Math.max(1.6,Math.min(6,2100/Math.max(r.width,r.height)));
+    hover.style.setProperty('--pm-light-x',(x*100).toFixed(1)+'%');
+    hover.style.setProperty('--pm-light-y',(y*100).toFixed(1)+'%');
+    hover.style.setProperty('--pm-tilt-x',((.5-y)*2*angle).toFixed(2)+'deg');
+    hover.style.setProperty('--pm-tilt-y',((x-.5)*2*angle).toFixed(2)+'deg');
+    hover.classList.add('pm-tilting');
   }
 
   function paintStage() {
@@ -292,8 +319,14 @@
 
   document.addEventListener('pointermove',event => {
     if (!enabled() || !fine?.matches || event.pointerType === 'touch') return;
-    const target = event.target?.closest?.(accentSelector);
-    if (target !== hover) {resetHover();hover = target;}
+    const target = event.target?.closest?.('.pm-widget');
+    if (target !== hover) {
+      resetHover();hover = target;
+      if (target) {
+        const r = target.getBoundingClientRect();
+        hoverBounds = {left:r.left,top:r.top,width:r.width,height:r.height};
+      }
+    }
     if (target) {
       point = {x:event.clientX,y:event.clientY};
       if (!pointerFrame) pointerFrame = requestAnimationFrame(paintPointer);
@@ -315,6 +348,7 @@
   },{passive:true});
   function releasePointer() {resetHover();heroPoint = {x:0,y:0};scheduleStage();}
   document.addEventListener('pointercancel',releasePointer,{passive:true});
+  window.addEventListener('blur',releasePointer);
   document.addEventListener('pointerup',event => {if (event.pointerType === 'touch') releasePointer();},{passive:true});
   document.addEventListener('pointerdown',event => {
     if (!enabled() || event.button>0) return;
@@ -332,14 +366,21 @@
     ripples.set(ripple,setTimeout(remove,650));
     ripple.addEventListener('animationend',remove,{once:true});
   },{passive:true});
-  window.addEventListener('scroll',scheduleStage,{passive:true});
-  window.addEventListener('resize',() => {updateIndicators(false);scheduleStage();},{passive:true});
+  // Reset on every scrolling surface, including the horizontal season matrix.
+  // A stationary pointer must not leave a card tilted after it moves away.
+  document.addEventListener('scroll',() => {resetHover();scheduleStage();},{passive:true,capture:true});
+  window.addEventListener('resize',() => {resetHover();updateIndicators(false);scheduleStage();},{passive:true});
 
   // A dialog can replace its content while already open. Watch only the native
   // dialog's shell; focus, Escape, dismissal and confirmation stay app-owned.
   const modal = document.querySelector('#modal');
-  const dialogChanges = typeof MutationObserver === 'function' && modal ? new MutationObserver(() => {
-    if (!modal.open || !enabled()) return;
+  const dialogChanges = typeof MutationObserver === 'function' && modal ? new MutationObserver(records => {
+    // Ignore our own inert light insertion; it must not restart dialog entry.
+    if (records.every(record => record.type === 'childList' &&
+      [...record.addedNodes,...record.removedNodes].every(node => node.nodeType === 1 && node.classList.contains('pm-widget-light')))) return;
+    if (!modal.open) {if (hover && modal.contains(hover)) resetHover();return;}
+    decorateWidgets(modal);
+    if (!enabled()) return;
     play(modal,[{opacity:.3,translate:'0 14px',scale:'.975'},{opacity:1,translate:'0 0',scale:'1'}],{duration:260});
     modal.querySelectorAll('.rules-list>div').forEach((row,index) =>
       play(row,[{opacity:.5,translate:'0 7px'},{opacity:1,translate:'0 0'}],{duration:360,delay:index*35}));
