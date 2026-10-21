@@ -58,7 +58,7 @@ async function assertQuietRefresh(page) {
   await statsMatch(page);
   await previous.dispose();
 }
-async function assertWidgetTilt(page,selector,label) {
+async function assertWidgetTilt(page,selector,label,attempt=0) {
   const widget=page.locator(selector).first();
   await page.mouse.move(0,0);
   await widget.scrollIntoViewIfNeeded();
@@ -66,6 +66,7 @@ async function assertWidgetTilt(page,selector,label) {
     animation.playState!=='running' || animation.effect?.getComputedTiming().iterations===Infinity));
   const box=await widget.boundingBox();
   assert.ok(box && box.width>0 && box.height>0,label+' must remain visible');
+  const surface=await widget.elementHandle();
   const y=Math.max(90,box.y+Math.min(22,box.height*.24));
   const read=()=>widget.evaluate(node=>{
     const matrix=new DOMMatrixReadOnly(getComputedStyle(node).transform);
@@ -78,12 +79,26 @@ async function assertWidgetTilt(page,selector,label) {
   await page.mouse.move(box.x+box.width*.18,y,{steps:4});
   await page.waitForTimeout(240);
   const left=await read();
+  if (!await surface.evaluate(node=>node.isConnected)) {
+    await surface.dispose();
+    assert.ok(attempt<2,label+' was repeatedly replaced during the pointer probe');
+    return assertWidgetTilt(page,selector,label,attempt+1);
+  }
   assert.ok(left.owns && left.active===1,label+' must own the effect without rotating ancestor panels');
   assert.ok(Math.abs(left.rotation)>.008 && left.lift<-1,label+' must visibly tilt and lift');
   await page.mouse.move(box.x+box.width*.82,y,{steps:4});
   await page.waitForTimeout(240);
   const right=await read();
-  assert.ok(left.rotation*right.rotation<0,label+' must follow the pointer across both sides');
+  // The real app refreshes its data and replaces the view every 20 seconds.
+  // Re-probe a fresh surface if that happened between the two pointer positions;
+  // a different DOM node has no obligation to retain the old node's rotation.
+  if (!await surface.evaluate(node=>node.isConnected)) {
+    await surface.dispose();
+    assert.ok(attempt<2,label+' was repeatedly replaced during the pointer probe');
+    return assertWidgetTilt(page,selector,label,attempt+1);
+  }
+  await surface.dispose();
+  assert.ok(left.rotation*right.rotation<0,label+' must follow the pointer across both sides: '+JSON.stringify({left,right,box}));
   assert.ok(right.lights>.8,label+' must show the pointer light');
   if (['nested fixture','full leaderboard'].includes(label)) await snapshot(page,'desktop-tilt-'+label.replaceAll(' ','-'));
   await page.mouse.move(0,0);
