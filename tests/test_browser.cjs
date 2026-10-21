@@ -215,8 +215,9 @@ async function testSize(browser,config) {
       await navigate(page,'dashboard','.stats-grid');
       await page.emulateMedia({reducedMotion:'reduce'});
       await statsMatch(page);
-      const moving=await page.evaluate(()=>document.getAnimations().filter(a=>a.playState==='running').length);
-      assert.equal(moving,0,'changing reduced-motion preference must cancel every visual animation');
+      // matchMedia change listeners are delivered at the next rendering update.
+      // Wait for that update instead of asserting during the same task.
+      await page.waitForFunction(()=>document.getAnimations().every(a=>a.playState!=='running'),null,{timeout:2500});
       await page.emulateMedia({reducedMotion:'no-preference'});
     }
     if (reduced) {
