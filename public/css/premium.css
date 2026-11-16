@@ -970,3 +970,48 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,
   .pm-nav-indicator,.pm-segment-indicator {forced-color-adjust:none;}
   .team-choice[aria-pressed="true"] {outline:2px solid Highlight!important;outline-offset:-3px!important;}
 }
+
+/* NFL team record: displayed alongside the crest on matchup cards only. */
+.game-card .team-crest-record {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:clamp(4px,.5vw,9px);
+  max-width:100%;
+  min-width:0;
+}
+.game-card .team-crest-record .team-logo-wrap,
+.game-card .team-crest-record .team-mark { flex-shrink:0; }
+.game-card .team-season-record {
+  display:inline-flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:flex-start;
+  gap:2px;
+  padding:5px 7px;
+  border:1px solid rgba(131,173,210,.26);
+  background:rgba(7,20,35,.53);
+  border-radius:7px;
+  color:#e8f3ff;
+  white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+  line-height:1.08;
+}
+.game-card .team-season-record .record-caption {
+  font-size:9px;
+  font-weight:700;
+  letter-spacing:.1em;
+  color:#a7bdd5;
+}
+.game-card .team-season-record strong {
+  font-size:clamp(12px,1.15vw,15px);
+  font-weight:750;
+  letter-spacing:.015em;
+}
+@media(max-width:420px) {
+  .game-card .team-crest-record {gap:4px}
+  .game-card .team-crest-record .team-logo-wrap {width:48px;height:50px}
+  .game-card .team-season-record {padding:4px 5px}
+  .game-card .team-season-record .record-caption {font-size:8px}
+  .game-card .team-season-record strong {font-size:12px}
+}
