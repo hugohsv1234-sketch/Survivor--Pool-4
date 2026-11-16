@@ -130,12 +130,34 @@
     if(!state.online)reasons.push('Zum Tippen benötigst du eine Verbindung zum Pool.');
     return{reasons,used:u.used[team],againstMax:(u.against[team]||0)>=3,blockedOpponent:(u.against[rival]||0)>=3,selected:pick?.team===team&&pick?.game_id===game.id};
   }
+  // Record as it stood at this game's kickoff. Count only completed regular-season
+  // games from the existing NFL feed; never use Survivor Pool picks or predictions.
+  function teamRecordBefore(game, id) {
+    const record = {wins:0, losses:0, ties:0};
+    for (const previous of state.data.games) {
+      if (previous.id===game.id || previous.week>18 || previous.status!=='final'
+          || previous.kickoff>=game.kickoff || ![previous.away,previous.home].includes(id)
+          || !Number.isInteger(previous.away_score) || !Number.isInteger(previous.home_score)) continue;
+      const scored = id===previous.away?previous.away_score:previous.home_score;
+      const conceded = id===previous.away?previous.home_score:previous.away_score;
+      if (scored>conceded) record.wins++;
+      else if (scored<conceded) record.losses++;
+      else record.ties++;
+    }
+    return record;
+  }
+  function teamRecordBadge(game, id) {
+    const r=teamRecordBefore(game,id);
+    const value=`${r.wins}–${r.losses}${r.ties?`–${r.ties}`:''}`;
+    const label=`${r.wins} Siege, ${r.losses} Niederlagen${r.ties?`, ${r.ties} Unentschieden`:''} vor diesem Spiel`;
+    return `<span class="team-season-record" title="${esc(label)}" aria-label="${esc(label)}"><span class="record-caption">BILANZ</span><strong>${value}</strong></span>`;
+  }
   function teamCard(game,id,home) {
     const t=teams()[id], e=eligibility(game,id), pick=ownPicks().find(p=>p.week===game.week);
     const tone=e.used?'used':e.selected?'selected':e.blockedOpponent?'opponent-blocked':'';
     let status=e.selected?'Dein Tipp':e.used?'Bereits verwendet':e.blockedOpponent?'Gegner-Limit erreicht':isStarted(game)?'Nicht mehr wählbar':game.week>state.data.current_week?'Noch nicht geöffnet':locked(pick)?'Tipp gesperrt':e.reasons.length?'Nicht wählbar':'Verfügbar';
     if(e.selected&&pick?.result!=='pending')status=resultText(pick.result);
-    return `<button class="team-choice ${tone} ${e.againstMax?'against-cap':''} ${e.reasons.length?'unavailable':''}" data-action="pick" data-game="${esc(game.id)}" data-team="${esc(id)}" aria-label="${esc(t.full_name)} wählen. ${esc(e.reasons.join(' ')||status)}" aria-pressed="${e.selected}" ${e.reasons.length?'aria-disabled="true"':''}><span class="team-side">${home?'HEIM':'AUSWÄRTS'}${e.selected?icon('check'):''}</span>${teamBadge(id)}<span class="team-city">${esc(t.city)}</span><strong>${esc(t.name)}</strong><span class="team-availability ${e.used?'bad':e.selected?'lime':e.blockedOpponent?'orange':e.reasons.length?'':'good'}">${e.selected?icon(locked(pick)?'lock':'check'):e.used?icon('close'):e.blockedOpponent?icon('info'):e.reasons.length?icon('lock'):'<i></i>'}${esc(status)}</span>${e.againstMax?'<span class="against-label">3× dagegen · Gegner gesperrt</span>':''}</button>`;
+    return `<button class="team-choice ${tone} ${e.againstMax?'against-cap':''} ${e.reasons.length?'unavailable':''}" data-action="pick" data-game="${esc(game.id)}" data-team="${esc(id)}" aria-label="${esc(t.full_name)} wählen. ${esc(e.reasons.join(' ')||status)}" aria-pressed="${e.selected}" ${e.reasons.length?'aria-disabled="true"':''}><span class="team-side">${home?'HEIM':'AUSWÄRTS'}${e.selected?icon('check'):''}</span>${'<span class="team-crest-record">' + teamBadge(id) + teamRecordBadge(game,id) + '</span>'}<span class="team-city">${esc(t.city)}</span><strong>${esc(t.name)}</strong><span class="team-availability ${e.used?'bad':e.selected?'lime':e.blockedOpponent?'orange':e.reasons.length?'':'good'}">${e.selected?icon(locked(pick)?'lock':'check'):e.used?icon('close'):e.blockedOpponent?icon('info'):e.reasons.length?icon('lock'):'<i></i>'}${esc(status)}</span>${e.againstMax?'<span class="against-label">3× dagegen · Gegner gesperrt</span>':''}</button>`;
   }
   function poolPickRate(game) {
     const data = state.data.pick_rates?.[game.id];
